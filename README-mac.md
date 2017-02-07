@@ -21,15 +21,23 @@ brew install wget
 Get all that installed, then run:
 
 ```shell
-git clone https://github.com/j-cimb-barker/komodo.git
+git clone https://github.com/jl777/komodo.git --branch darwin --single-branch
 cd komodo
-git checkout dev
 ./zcutil/build-mac.sh
+./zcutil/fetch-params.sh
+```
+After building and fetching the ZcashParams launch komodod from the src directory. It will abort and complain about missing komodo.conf inside ~/Library/Application Support/Komodo. Create komodo.conf in the Komodo folder and add the necessary values:
+
+```shell
+rpcuser=yourRpcUserName
+rpcpassword=yourRpcPassword
+rpcallowip=127.0.0.1
+listen=1
+server=1
 ```
 
-To build a distributable version of komodo then run the makeDistrib.sh script after building.
+Komodod will now sync the chain when you start it again.
+If you get stuck or just need some assistance contact us in the supernet slack and ping ca333.
 
-When you are done building, you need to do a few things in the [Configuration](https://github.com/zcash/zcash/wiki/1.0-User-Guide#configuration) section of the Zcash User Guide differently because we are on the Mac. All instances of `~/.zcash` need to be replaced by `~/Library/Application\ Support/Zcash` 
-The fetch-params.sh script, however, has already been altered to fetch the proving keys into the correct directory to conform to Mac specific naming conventions.
 
 Happy Building

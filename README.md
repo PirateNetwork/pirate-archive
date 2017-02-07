@@ -19,31 +19,37 @@ blockchain has reached a significant size.
 
 Security Warnings
 -----------------
- 
+
 See important security warnings in
 [doc/security-warnings.md](doc/security-warnings.md).
 
 License
 -------
- 
+
 Zcash is released under the terms of the MIT license. See [COPYING](COPYING) for more
 information or see http://opensource.org/licenses/MIT.
- 
- 
+
+
 Komodo Specific Notes
 =====================
- 
+
 Dependencies
 ------------
- 
+
 ```
 #The following packages are needed:
 sudo apt-get install build-essential pkg-config libcurl-gnutls libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python zlib1g-dev wget bsdmainutils automake libboost-all-dev libssl-dev libprotobuf-dev protobuf-compiler libqt4-dev libqrencode-dev libdb++-dev ntp ntpdate
 ```
- 
+
+Build Komodo on OSX
+------
+
+Follow the [OSX build instructions](README-mac.md) to build komodod and komodo-cli for OSX.
+
+
 Komodo
 ------
- 
+
 ```
 git clone https://github.com/jl777/komodo
 cd komodo
@@ -53,7 +59,7 @@ cd komodo
 ./zcutil/build.sh -j8
 #This can take some time.
 ```
- 
+
 # to update an existing version, git checkout dPoW if not on that branch already
 
 git pull
@@ -66,7 +72,7 @@ To reset the blockchain, from ~/.komodo rm -rf blocks chainstate debug.log komod
 
 Create komodo.conf
 ------------------
- 
+
 ```
 cd ~
 mkdir .komodo
@@ -85,10 +91,10 @@ addnode=5.9.122.241
 addnode=144.76.94.38
 addnode=89.248.166.91
 ```
- 
+
 Start mining
 ------------
- 
+
 ```
 #iguana documentation shows how to get the btcpubkey and wifstrs that need to be used
 
@@ -120,8 +126,8 @@ cd komodo
 ps -ef | grep komodod
 
 #To stop the daemon:
-./src/komodo-cli stop 
- 
+./src/komodo-cli stop
+
 #To view komodod output:
 tail -f ~/.komodo/debug.log
 
@@ -181,5 +187,3 @@ For example:
 mv ~/.komodo ~/.komodo.old && mkdir ~/.komodo && cp ~/.komodo.old/komodo.conf ~/.komodo.old/peers.dat ~/.komodo
 ./komodod -exchange -exportdir=/tmp &
 ./komodo-cli importwallet /tmp/example
-
-
