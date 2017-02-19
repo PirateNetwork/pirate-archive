@@ -335,6 +335,11 @@ int32_t komodo_voutupdate(int32_t *isratificationp,int32_t notaryid,uint8_t *scr
         return(-1);
     if ( scriptlen == 35 && scriptbuf[0] == 33 && scriptbuf[34] == 0xac )
     {
+        if ( i == 0 && j == 0 && memcmp(NOTARY_PUBKEY33,scriptbuf+1,33) == 0 )
+        {
+            printf("KOMODO_LASTMINED.%d -> %d\n",KOMODO_LASTMINED,height);
+            KOMODO_LASTMINED = height;
+        }
         decode_hex(crypto777,33,(char *)CRYPTO777_PUBSECPSTR);
         /*for (k=0; k<33; k++)
             printf("%02x",crypto777[k]);
@@ -532,7 +537,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
                 } else printf("cant get scriptPubKey for ht.%d txi.%d vin.%d\n",height,i,j);
             }
             numvalid = bitweight(signedmask);
-            if ( (((height < 90000 || (signedmask & 1) != 0) && numvalid >= KOMODO_MINRATIFY) || numvalid > (numnotaries/4)) )
+            if ( (((height < 90000 || (signedmask & 1) != 0) && numvalid >= KOMODO_MINRATIFY) || numvalid > (numnotaries/5)) )
             {
                 printf("%s ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d <<<<<<<<<<< notarized\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts);
                 notarized = 1;
@@ -540,7 +545,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
             for (j=0; j<numvouts; j++)
             {
                 len = block.vtx[i].vout[j].scriptPubKey.size();
-                if ( len <= sizeof(scriptbuf) )
+                if ( len >= sizeof(uint32_t) && len <= sizeof(scriptbuf) )
                 {
 #ifdef KOMODO_ZCASH
                     memcpy(scriptbuf,block.vtx[i].vout[j].scriptPubKey.data(),len);
@@ -571,7 +576,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
                     for (j=1; j<numvouts-1; j++)
                     {
                         len = block.vtx[i].vout[j].scriptPubKey.size();
-                        if ( len <= sizeof(scriptbuf) )
+                        if ( len >= sizeof(uint32_t) && len <= sizeof(scriptbuf) )
                         {
 #ifdef KOMODO_ZCASH
                             memcpy(scriptbuf,block.vtx[i].vout[j].scriptPubKey.data(),len);
