@@ -1515,7 +1515,7 @@ void komodo_args()
             while ( fname[strlen(fname)-1] != '\\' )
                 fname[strlen(fname)-1] = 0;
             if ( iter == 0 )
-                strcat(fname,".komodo\\komodo.conf");
+                strcat(fname,"Komodo\\komodo.conf");
             else strcat(fname,".bitcoin\\bitcoin.conf");
 #else
             while ( fname[strlen(fname)-1] != '/' )
