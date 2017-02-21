@@ -1031,7 +1031,7 @@ char *clonestr(char *str)
     {
         printf("warning cloning nullstr.%p\n",str);
 #ifdef __APPLE__
-        while ( 1 ) sleep(1);
+        while ( 1 ) boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
 #endif
         str = (char *)"<nullstr>";
     }
@@ -1162,7 +1162,7 @@ void *queue_delete(queue_t *queue,struct queueitem *copy,int32_t copysize)
     {
         DL_FOREACH(queue->list,item)
         {
-            if ( item == copy || (item->allocsize == copysize && memcmp((void *)((long)item + sizeof(struct queueitem)),(void *)((long)copy + sizeof(struct queueitem)),copysize) == 0) )
+            if ( item == copy || (item->allocsize == copysize && memcmp((void *)((intptr_t)item + sizeof(struct queueitem)),(void *)((intptr_t)copy + sizeof(struct queueitem)),copysize) == 0) )
             {
                 DL_DELETE(queue->list,item);
                 portable_mutex_unlock(&queue->mutex);
@@ -1480,7 +1480,7 @@ void komodo_args()
         while ( (dirname= (char *)GetDataDir(false).string().c_str()) == 0 || dirname[0] == 0 )
         {
             fprintf(stderr,"waiting for datadir\n");
-            sleep(3);
+	    boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
         }
         //fprintf(stderr,"Got datadir.(%s)\n",dirname);
         if ( ASSETCHAINS_SYMBOL[0] != 0 )
