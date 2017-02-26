@@ -35,7 +35,7 @@ int32_t pax_fiatstatus(uint64_t *available,uint64_t *deposited,uint64_t *issued,
             //printf("%p %s %.8f %.8f %.8f %.8f %.8f\n",sp,base,dstr(*deposited),dstr(*issued),dstr(*withdrawn),dstr(*approved),dstr(*redeemed));
             return(0);
         } else printf("pax_fiatstatus cant get basesp.%s\n",base);
-    } else printf("pax_fiatstatus illegal base.%s\n",base);
+    } // else printf("pax_fiatstatus illegal base.%s\n",base);
     return(-1);
 }
 
@@ -466,8 +466,17 @@ int32_t komodo_gateway_deposits(CMutableTransaction *txNew,char *base,int32_t to
     if ( tokomodo == 0 )
     {
         opcode = 'I';
-        if ( komodo_isrealtime(&ht) == 0 )
+        for (i=0; i<10; i++)
+        {
+            if ( komodo_isrealtime(&ht) != 0 )
+                break;
+            sleep(1);
+        }
+        if ( i == 10 )
+        {
+            printf("%s not realtime ht.%d\n",ASSETCHAINS_SYMBOL,ht);
             return(0);
+        }
     }
     else
     {
@@ -484,12 +493,14 @@ int32_t komodo_gateway_deposits(CMutableTransaction *txNew,char *base,int32_t to
             if ( kmdsp != 0 && (kmdsp->NOTARIZED_HEIGHT >= pax->height || kmdsp->CURRENT_HEIGHT > pax->height+30) ) // assumes same chain as notarize
                 pax->validated = pax->komodoshis; //kmdsp->NOTARIZED_HEIGHT;
             else pax->validated = pax->ready = 0;
+#else
+            pax->validated = pax->komodoshis;
 #endif
         }
         if ( ASSETCHAINS_SYMBOL[0] != 0 && (pax_fiatstatus(&available,&deposited,&issued,&withdrawn,&approved,&redeemed,symbol) != 0 || available < pax->fiatoshis) )
         {
             if ( strcmp(ASSETCHAINS_SYMBOL,symbol) == 0 )
-                printf("miner.[%s]: skip %s %.8f when avail %.8f\n",ASSETCHAINS_SYMBOL,symbol,dstr(pax->fiatoshis),dstr(available));
+                printf("miner.[%s]: skip %s %.8f when avail %.8f deposited %.8f, issued %.8f withdrawn %.8f approved %.8f redeemed %.8f\n",ASSETCHAINS_SYMBOL,symbol,dstr(pax->fiatoshis),dstr(available),dstr(deposited),dstr(issued),dstr(withdrawn),dstr(approved),dstr(redeemed));
             continue;
         }
         /*printf("pax.%s marked.%d %.8f -> %.8f ready.%d validated.%d\n",pax->symbol,pax->marked,dstr(pax->komodoshis),dstr(pax->fiatoshis),pax->ready!=0,pax->validated!=0);
@@ -542,7 +553,7 @@ int32_t komodo_gateway_deposits(CMutableTransaction *txNew,char *base,int32_t to
         {
             len += komodo_rwapproval(1,&data[len],pax);
             PENDING_KOMODO_TX += pax->komodoshis;
-            printf(" len.%d vout.%u DEPOSIT %.8f <- pax.%s pending %.8f | ",len,pax->vout,(double)txNew->vout[numvouts].nValue/COIN,symbol,dstr(PENDING_KOMODO_TX));
+            printf(" len.%d vout.%u DEPOSIT %.8f <- pax.%s pending ht %d %d %.8f | ",len,pax->vout,(double)txNew->vout[numvouts].nValue/COIN,symbol,pax->height,pax->otherheight,dstr(PENDING_KOMODO_TX));
         }
         if ( numvouts++ >= 64 )
             break;
@@ -618,9 +629,9 @@ int32_t komodo_check_deposit(int32_t height,const CBlock& block) // verify above
                 if ( (pax= komodo_paxfinds(txids[i-1],vouts[i-1])) != 0 ) // finds... make sure right one
                 {
                     pax->type = opcode;
-                    if ( opcode == 'I' && pax_fiatstatus(&available,&deposited,&issued,&withdrawn,&approved,&redeemed,symbol) != 0 || available < pax->fiatoshis )
+                    if ( opcode == 'I' && (pax_fiatstatus(&available,&deposited,&issued,&withdrawn,&approved,&redeemed,symbol) != 0 || available < pax->fiatoshis) )
                     {
-                        printf("checkdeposit: skip %s %.8f when avail %.8f\n",pax->symbol,dstr(pax->fiatoshis),dstr(available));
+                        printf("checkdeposit.[%s]: skip %s %.8f when avail %.8f deposited %.8f, issued %.8f withdrawn %.8f approved %.8f redeemed %.8f\n",ASSETCHAINS_SYMBOL,symbol,dstr(pax->fiatoshis),dstr(available),dstr(deposited),dstr(issued),dstr(withdrawn),dstr(approved),dstr(redeemed));
                         continue;
                     }
                     if ( ((opcode == 'I' && (pax->fiatoshis == 0 || pax->fiatoshis == block.vtx[0].vout[i].nValue)) || (opcode == 'X' && (pax->komodoshis == 0 || pax->komodoshis == block.vtx[0].vout[i].nValue))) )
@@ -647,7 +658,7 @@ int32_t komodo_check_deposit(int32_t height,const CBlock& block) // verify above
                         printf(">>>>>>>>>>> %c errs.%d i.%d match %.8f vs %.8f pax.%p\n",opcode,errs,i,dstr(opcode == 'I' ? pax->fiatoshis : pax->komodoshis),dstr(block.vtx[0].vout[i].nValue),pax);
                     }
                 }
-                else
+                else if ( kmdheights[i-1] > 0 && otherheights[i-1] > 0 )
                 {
                     hash = block.GetHash();
                     for (j=0; j<32; j++)
@@ -834,7 +845,7 @@ const char *komodo_opreturn(int32_t height,uint64_t value,uint8_t *opretbuf,int3
     }
     else if ( opretbuf[0] == 'W' )//&& opretlen >= 38 )
     {
-        if ( komodo_baseid((char *)&opretbuf[opretlen-4]) >= 0 && strcmp("KMD",(char *)&opretbuf[opretlen-4]) != 0 )
+        if ( komodo_baseid((char *)&opretbuf[opretlen-4]) >= 0 && strcmp(ASSETCHAINS_SYMBOL,(char *)&opretbuf[opretlen-4]) == 0 )
         {
             for (i=0; i<opretlen; i++)
                 printf("%02x",opretbuf[i]);
