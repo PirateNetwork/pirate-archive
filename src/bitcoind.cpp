@@ -41,7 +41,8 @@ void WaitForShutdown(boost::thread_group* threadGroup)
     // Tell the main threads to shutdown.
     while (!fShutdown)
     {
-        MilliSleep(16000);
+        //fprintf(stderr,"call passport iteration\n");
+        MilliSleep(10000);
         komodo_passport_iteration();
         fShutdown = ShutdownRequested();
     }
@@ -104,7 +105,7 @@ bool AppInit(int argc, char* argv[])
         {
             //if ( komodo_is_issuer() != 0 )
             //    komodo_passport_iteration();
-            sleep(1);
+	  boost::this_thread::sleep_for(boost::chrono::seconds(1));
         }
         printf("initialized %s\n",ASSETCHAINS_SYMBOL);
         if (!boost::filesystem::is_directory(GetDataDir(false)))
@@ -188,7 +189,7 @@ bool AppInit(int argc, char* argv[])
     } catch (...) {
         PrintExceptionContinue(NULL, "AppInit()");
     }
-
+    fprintf(stderr,"fRet.%d\n",(int32_t)fRet);
     if (!fRet)
     {
         threadGroup.interrupt_all();
