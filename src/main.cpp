@@ -367,7 +367,8 @@ void ProcessBlockAvailability(NodeId nodeid) {
 
     if (!state->hashLastUnknownBlock.IsNull()) {
         BlockMap::iterator itOld = mapBlockIndex.find(state->hashLastUnknownBlock);
-        if (itOld != mapBlockIndex.end() && itOld->second->nChainWork > 0) {
+        if (itOld != mapBlockIndex.end() && itOld->second->nChainWork > 0)
+        {
             if (state->pindexBestKnownBlock == NULL || itOld->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
                 state->pindexBestKnownBlock = itOld->second;
             state->hashLastUnknownBlock.SetNull();
@@ -380,14 +381,15 @@ void UpdateBlockAvailability(NodeId nodeid, const uint256 &hash) {
     CNodeState *state = State(nodeid);
     assert(state != NULL);
 
-    ProcessBlockAvailability(nodeid);
+    /*ProcessBlockAvailability(nodeid);
 
     BlockMap::iterator it = mapBlockIndex.find(hash);
     if (it != mapBlockIndex.end() && it->second->nChainWork > 0) {
         // An actually better block was announced.
         if (state->pindexBestKnownBlock == NULL || it->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
             state->pindexBestKnownBlock = it->second;
-    } else {
+    } else*/
+    {
         // An unknown block was announced; just assume that the latest one is the best one.
         state->hashLastUnknownBlock = hash;
     }
@@ -706,12 +708,49 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
     return true;
 }
 
-int32_t komodo_validate_interest(uint32_t *expiredp,const CTransaction& tx,uint32_t txblocktime)
+uint32_t komodo_heightstamp(int32_t height);
+
+int32_t komodo_validate_interest(uint32_t *expiredp,const CTransaction& tx,int32_t txheight,uint32_t prevblocktime,int32_t strictflag)
 {
-    int32_t i,txheight=0; uint32_t cmptime,txheighttime,tiptime=0,locktime; uint64_t value=0;
-    if ( ASSETCHAINS_SYMBOL[0] == 0 && (int64_t)tx.nLockTime >= LOCKTIME_THRESHOLD )//1473793441 )
+    int32_t i; uint32_t cmptime=0,tiptime=0,locktime=0; uint64_t value=0; CBlockIndex *tip=0;
+    if ( KOMODO_REWIND == 0 && ASSETCHAINS_SYMBOL[0] == 0 && (int64_t)tx.nLockTime >= LOCKTIME_THRESHOLD )//1473793441 )
     {
+        //locktime = komodo_interest_args(&prevblocktime,&txheight,&tiptime,&value,tx.GetHash(),0);
+        LOCK(cs_main);
+        CTransaction gettx; uint256 hashBlock; CBlockIndex *pindex,*previndex;
+        if ( GetTransaction(tx.GetHash(),gettx,hashBlock,true) )
+        {
+            if ( (pindex= mapBlockIndex[hashBlock]) != 0 )
+            {
+                txheight = pindex->nHeight;
+                prevblocktime = pindex->nTime;
+                if ( (previndex= pindex->pprev) != 0 )
+                    prevblocktime = previndex->nTime;
+            }
+        }
+        if ( prevblocktime == 0 )
+        {
+            if ( chainActive.Tip() != 0 )
+            {
+                if ( strictflag == 0 || txheight == 0 || txheight == chainActive.Tip()->nHeight+1 )
+                    prevblocktime = chainActive.Tip()->nTime;
+                else
+                {
+                    fprintf(stderr,"couldnt get prevblocktime for [%d]  tiptime.%u\n",txheight,chainActive.Tip()->nTime);
+                    return(-1);
+                }
+            }
+        }
+        if ( prevblocktime == 0 )
+            return(-1);
+        cmptime = prevblocktime + 600;
+        /* uint32_t prevblocktime=0,cmptime=0,txheighttime=0,tiptime=0,locktime=0;
+        prevblocktime = 0;
         locktime = komodo_interest_args(&txheighttime,&txheight,&tiptime,&value,tx.GetHash(),0);
+        if ( (txheight= txheightarg) == 0 )
+            txheight = chainActive.Tip()->nHeight + 1;
+        if ( (prev= komodo_chainactive(txheight-1)) != 0 )
+            prevblocktime = prev->nTime;
         if ( tiptime == 0 )
             tiptime = (int32_t)chainActive.Tip()->nTime;
         if ( txheighttime == 0 )
@@ -731,6 +770,10 @@ int32_t komodo_validate_interest(uint32_t *expiredp,const CTransaction& tx,uint3
             cmptime = txblocktime;
         if ( tiptime != 0 && tiptime < cmptime )
             cmptime = tiptime;
+        if ( locktime != 0 && prevblocktime != 0 && prevblocktime < cmptime )
+            cmptime = prevblocktime;
+        if ( (prev= komodo_chainactive(txheight-1)) != 0 )
+            cmptime = prev->nTime + 600;
         if ( cmptime >= 1490159171 - 24*3600 )
         {
             if ( cmptime != 0 && (int64_t)tx.nLockTime < cmptime-3600 )
@@ -738,19 +781,45 @@ int32_t komodo_validate_interest(uint32_t *expiredp,const CTransaction& tx,uint3
                 if ( txheighttime > 1490159171 || (locktime == 0 && txheighttime >= 1490159171) ) // 246748
                 {
                     if ( tx.nLockTime != 1477258935 )
-                        fprintf(stderr,"komodo_validate_interest reject.%d locktime %u/%u vs nBlockTime %u txheighttime.%u tiptime.%u txb.%u cmp.%u\n",txheight,(uint32_t)tx.nLockTime,locktime,(uint32_t)chainActive.Tip()->nTime,txheighttime,tiptime,txblocktime,cmptime);
+                    {
+                        fprintf(stderr,"komodo_validate_interest reject.%d  [%d] locktime %u/%u vs nBlockTime %u txheighttime.%u tiptime.%u txb.%u cmp.%u\n",txheight,(int32_t)(tx.nLockTime - (cmptime-3600)),(uint32_t)tx.nLockTime,locktime,(uint32_t)chainActive.Tip()->nTime,txheighttime,tiptime,txblocktime,cmptime);
+                    }
                     if ( expiredp != 0 )
                         *expiredp = cmptime-3600;
                     return(-1);
                 } else fprintf(stderr,"validateinterest grandfather.%d locktime %u vs txheighttime.%u tiptime.%u txb.%u cmp.%u\n",(int32_t)txheight,tx.nLockTime,txheighttime,tiptime,txblocktime,cmptime);
             }
         }
-        //fprintf(stderr,"validateinterest accept.%d tip.%d locktime %u/%u vs txheighttime.%u tiptime.%u txb.%u cmp.%u\n",(int32_t)txheight,(int32_t)chainActive.Tip()->nHeight,(int32_t)tx.nLockTime,locktime,txheighttime,tiptime,txblocktime,cmptime);
+        if ( (cmptime= prevblocktime) == 0 )
+        {
+            if ( (cmptime= komodo_heightstamp(txheight-1)) == 0 )
+            {
+                fprintf(stderr,"couldnt get prev.[%d] use tiptime.%u\n",txheight-1,cmptime);
+                return(-1);
+            }
+        }*/
+        if ( cmptime > 0 && txheight > 246748 )
+        {
+            if ( txheight < 247205 )
+                cmptime -= 600;
+            if ( (int64_t)tx.nLockTime < cmptime-3600 )
+            {
+                if ( tx.nLockTime != 1477258935 )
+                {
+                    //fprintf(stderr,"komodo_validate_interest reject.%d  [%d] locktime %u tiptime.%u cmp.%u\n",txheight,(int32_t)(tx.nLockTime - (cmptime-3600)),(uint32_t)tx.nLockTime,(uint32_t)(tip != 0 ? tip->nTime : 0),cmptime);
+                }
+                if ( expiredp != 0 )
+                    *expiredp = cmptime-3600;
+                return(-1);
+            }
+        }
+        if ( strictflag != 0 )
+            fprintf(stderr,"validateinterest strict.%d accept.%d [%d] tip.%d locktime %u cmp.%u\n",strictflag,(int32_t)txheight,(int32_t)(tx.nLockTime - (cmptime-3600)),(int32_t)(tip != 0 ? tip->nHeight : 0),(int32_t)tx.nLockTime,cmptime);
     }
     return(0);
 }
 
-bool IsFinalTx(uint32_t *expiredp,const CTransaction &tx, int nBlockHeight, int64_t nBlockTime,int flags,int32_t interesttime)
+bool IsFinalTx(uint32_t *expiredp,const CTransaction &tx, int nBlockHeight, int64_t nBlockTime,int flags,uint32_t prevblocktime)
 {
     int32_t i;
     if ( expiredp != 0 )
@@ -759,11 +828,11 @@ bool IsFinalTx(uint32_t *expiredp,const CTransaction &tx, int nBlockHeight, int6
         return true;
     if ( ASSETCHAINS_SYMBOL[0] == 0 && flags == STANDARD_LOCKTIME_VERIFY_FLAGS && (int64_t)tx.nLockTime >= LOCKTIME_THRESHOLD )//&& nBlockTime >= 1473793441 ) //&& (int64_t)tx.nLockTime < nBlockTime-3600
     {
-        if ( komodo_validate_interest(expiredp,tx,interesttime) < 0 ) //if ( nBlockTime >= 1490159171 ) // 246748
+        if ( komodo_validate_interest(expiredp,tx,nBlockHeight,prevblocktime < nBlockTime ? nBlockTime : prevblocktime,1) < 0 ) //if ( nBlockTime >= 1490159171 ) // 246748
         {
             fprintf(stderr,"[%d] IsFinalTx reject.%d locktime %u vs nBlockTime %u\n",(int32_t)(tx.nLockTime-nBlockTime),(int32_t)nBlockHeight,tx.nLockTime,(uint32_t)nBlockTime);
             return(false); // need to prevent pastdating tx
-        } else fprintf(stderr,"IsFinalTx accept.%d locktime %u vs nBlockTime %u\n",(int32_t)nBlockHeight,tx.nLockTime,(uint32_t)nBlockTime);
+        } //else fprintf(stderr,"IsFinalTx accept.%d locktime %u vs nBlockTime %u\n",(int32_t)nBlockHeight,tx.nLockTime,(uint32_t)nBlockTime);
     }
     if ((int64_t)tx.nLockTime < ((int64_t)tx.nLockTime < LOCKTIME_THRESHOLD ? (int64_t)nBlockHeight : nBlockTime))
         return true;
@@ -912,9 +981,9 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
 
 bool CheckTransaction(const CTransaction& tx, CValidationState &state,libzcash::ProofVerifier& verifier)
 {
-    static uint256 array[15]; int32_t j,k,n;
+    static uint256 array[64]; static int32_t numbanned,indallvouts; int32_t j,k,n;
     if ( *(int32_t *)&array[0] == 0 )
-        komodo_bannedset(array,(int32_t)(sizeof(array)/sizeof(*array)));
+        numbanned = komodo_bannedset(&indallvouts,array,(int32_t)(sizeof(array)/sizeof(*array)));
     /*if ( komodo_validate_interest(tx) < 0 )
     {
         fprintf(stderr,"CheckTransaction komodo_validate_interest error\n");
@@ -923,13 +992,13 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state,libzcash::
     n = tx.vin.size();
     for (j=0; j<n; j++)
     {
-        for (k=0; k<sizeof(array)/sizeof(*array); k++)
+        for (k=0; k<numbanned; k++)
         {
-            if ( tx.vin[j].prevout.hash == array[k] && tx.vin[j].prevout.n == 1 )
+            if ( tx.vin[j].prevout.hash == array[k] && (tx.vin[j].prevout.n == 1 || k >= indallvouts) )
             {
                 static uint32_t counter;
                 if ( counter++ < 100 )
-                    printf("MEMPOOL: banned tx.%d being used at ht.%d vini.%d\n",k,(int32_t)chainActive.Tip()->nHeight,j);
+                    printf("MEMPOOL: banned tx.%d being used at ht.%d vout.%d\n",k,(int32_t)chainActive.Tip()->nHeight,j);
                 return(false);
             }
         }
@@ -1184,7 +1253,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     // be mined yet.
     if (!CheckFinalTx(tx, STANDARD_LOCKTIME_VERIFY_FLAGS))
     {
-        fprintf(stderr,"AcceptToMemoryPool reject non-final\n");
+        //fprintf(stderr,"AcceptToMemoryPool reject non-final\n");
         return state.DoS(0, false, REJECT_NONSTANDARD, "non-final");
     }
    // is it already in the memory pool?
@@ -2338,6 +2407,26 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
         const CTransaction &tx = block.vtx[i];
+        uint32_t prevtime = 0; CBlockIndex *ptr;
+        if ( (ptr= pindex->pprev) != 0 )
+            prevtime = ptr->nTime;
+        /*if ( chainActive.Tip() != 0 && height == chainActive.Tip()->nHeight+1 )
+            prevtime = chainActive.Tip()->nTime;
+        else if ( pindex != 0 )
+        {
+            if ( (ptr= pindex->pprev) != 0 )
+                prevtime = ptr->nTime;
+        }
+        if ( prevtime == 0 )
+        {
+            if ( height > 0 && (ptr= chainActive[height-1]) != 0 )
+                prevtime = ptr->nTime;
+        }*/
+        if ( komodo_validate_interest(0,tx,pindex->nHeight,prevtime,2) < 0 )
+        {
+            //fprintf(stderr,"CheckBlock(%d:%d) %d, %u: komodo_validate_interest failure blocksize.%d tiptime.%u %u\n",height,komodo_block2height((CBlock *)&block),pindex!=0?(int32_t)pindex->nHeight:0,pindex!=0?(int32_t)pindex->nTime:0,(int32_t)block.vtx.size(),chainActive.Tip()->nTime,prevtime);
+            return state.DoS(10, error("ConnectBlock(): validate interest failed"),REJECT_INVALID, "bad-apr-calc");
+        }
 
         nInputs += tx.vin.size();
         nSigOps += GetLegacySigOpCount(tx);
@@ -2827,27 +2916,22 @@ static bool ActivateBestChainStep(CValidationState &state, CBlockIndex *pindexMo
         if (!DisconnectTip(state))
             return false;
     }
-    /*if ( KOMODO_REWIND != 0 && chainActive.Tip()->nHeight >= KOMODO_REWIND )
+    if ( KOMODO_REWIND != 0 )
     {
-        fprintf(stderr,"rewind ht.%d\n",chainActive.Tip()->nHeight);
-        while ( chainActive.Tip()->nHeight > KOMODO_REWIND )
+        fprintf(stderr,"rewind start ht.%d\n",chainActive.Tip()->nHeight);
+        while ( KOMODO_REWIND > 0 && chainActive.Tip()->nHeight > KOMODO_REWIND )
         {
             if ( !DisconnectTip(state) )
             {
-                //InvalidateBlock(state,chainActive.Tip());
-                return false;
+                InvalidateBlock(state,chainActive.Tip());
+                break;
             }
         }
-        fprintf(stderr,"end rewind ht.%d\n",chainActive.Tip()->nHeight);
-        if ( chainActive.Tip()->nHeight == KOMODO_REWIND )
-        {
-            fprintf(stderr,"reached rewind.%d, best to do: ./komodo-cli stop\n",KOMODO_REWIND);
-            sleep(3);
-            return(true);
-        }
-        pindexOldTip = chainActive.Tip();
-        pindexFork = chainActive.FindFork(pindexMostWork);
-    }*/
+        fprintf(stderr,"reached rewind.%d, best to do: ./komodo-cli stop\n",KOMODO_REWIND);
+        sleep(60);
+        KOMODO_REWIND = 0;
+        return(true);
+    }
     // Build list of new blocks to connect.
     std::vector<CBlockIndex*> vpindexToConnect;
     bool fContinue = true;
@@ -2980,7 +3064,7 @@ bool InvalidateBlock(CValidationState& state, CBlockIndex *pindex) {
     // The resulting new best tip may not be in setBlockIndexCandidates anymore, so
     // add it again.
     BlockMap::iterator it = mapBlockIndex.begin();
-    while (it != mapBlockIndex.end()) {
+    while (it != mapBlockIndex.end() && it->second != 0 ) {
         if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && !setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
             setBlockIndexCandidates.insert(it->second);
         }
@@ -3277,9 +3361,22 @@ bool CheckBlock(int32_t height,CBlockIndex *pindex,const CBlock& block, CValidat
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
     {
-        if ( komodo_validate_interest(0,tx,block.nTime) < 0 )
+        uint32_t prevtime = 0; CBlockIndex *ptr;
+        if ( chainActive.Tip() != 0 && height == chainActive.Tip()->nHeight+1 )
+            prevtime = chainActive.Tip()->nTime;
+        else if ( pindex != 0 )
         {
-            //fprintf(stderr,"CheckBlock(%d:%d) %d, %u: komodo_validate_interest failure blocksize.%d\n",height,komodo_block2height((CBlock *)&block),pindex!=0?(int32_t)pindex->nHeight:0,pindex!=0?(int32_t)pindex->nTime:0,(int32_t)block.vtx.size());
+            if ( (ptr= pindex->pprev) != 0 )
+                prevtime = ptr->nTime;
+        }
+        if ( prevtime == 0 )
+        {
+            if ( height > 0 && (ptr= chainActive[height-1]) != 0 )
+                prevtime = ptr->nTime;
+        }
+        if ( komodo_validate_interest(0,tx,height,prevtime,0) < 0 )
+        {
+            //fprintf(stderr,"CheckBlock(%d:%d) %d, %u: komodo_validate_interest failure blocksize.%d tiptime.%u %u\n",height,komodo_block2height((CBlock *)&block),pindex!=0?(int32_t)pindex->nHeight:0,pindex!=0?(int32_t)pindex->nTime:0,(int32_t)block.vtx.size(),chainActive.Tip()->nTime,prevtime);
             return error("CheckBlock: komodo_validate_interest failed");
         }
         if (!CheckTransaction(tx, state, verifier))
