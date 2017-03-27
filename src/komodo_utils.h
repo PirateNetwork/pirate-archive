@@ -1355,7 +1355,7 @@ void komodo_configfile(char *symbol,uint16_t port)
         komodo_userpass(username,password,fp);
         sprintf(KMDUSERPASS,"%s:%s",username,password);
         fclose(fp);
-        //printf("KOMODO.(%s) -> userpass.(%s)\n",fname,KMDUSERPASS);
+//printf("KOMODO.(%s) -> userpass.(%s)\n",fname,KMDUSERPASS);
     } else printf("couldnt open.(%s)\n",fname);
 }
 
@@ -1464,7 +1464,9 @@ void komodo_args()
     } else KOMODO_PAX = GetArg("-pax",0);
     name = GetArg("-ac_name","");
     if ( (KOMODO_REWIND= GetArg("-rewind",0)) != 0 )
-        ;
+    {
+        printf("KOMODO_REWIND %d\n",KOMODO_REWIND);
+    }
     if ( name.c_str()[0] != 0 )
     {
         ASSETCHAINS_SUPPLY = GetArg("-ac_supply",10);

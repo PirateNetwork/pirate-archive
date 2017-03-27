@@ -46,6 +46,7 @@ class CValidationInterface;
 class CValidationState;
 
 struct CNodeStateStats;
+#define DEFAULT_MEMPOOL_EXPIRY 1
 
 /** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
 static const unsigned int DEFAULT_BLOCK_MAX_SIZE = MAX_BLOCK_SIZE;
