@@ -325,7 +325,19 @@ void FinalizeNode(NodeId nodeid) {
 
     mapNodeState.erase(nodeid);
 }
-
+    
+void LimitMempoolSize(CTxMemPool& pool, size_t limit, unsigned long age)
+{
+/*    int expired = pool.Expire(GetTime() - age);
+    if (expired != 0)
+        LogPrint("mempool", "Expired %i transactions from the memory pool\n", expired);
+    
+    std::vector<uint256> vNoSpendsRemaining;
+    pool.TrimToSize(limit, &vNoSpendsRemaining);
+    BOOST_FOREACH(const uint256& removed, vNoSpendsRemaining)
+    pcoinsTip->Uncache(removed);*/
+}
+    
 // Requires cs_main.
 // Returns a bool indicating whether we requested this block.
 bool MarkBlockAsReceived(const uint256& hash) {
@@ -367,7 +379,8 @@ void ProcessBlockAvailability(NodeId nodeid) {
 
     if (!state->hashLastUnknownBlock.IsNull()) {
         BlockMap::iterator itOld = mapBlockIndex.find(state->hashLastUnknownBlock);
-        if (itOld != mapBlockIndex.end() && itOld->second->nChainWork > 0) {
+        if (itOld != mapBlockIndex.end() && itOld->second->nChainWork > 0)
+        {
             if (state->pindexBestKnownBlock == NULL || itOld->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
                 state->pindexBestKnownBlock = itOld->second;
             state->hashLastUnknownBlock.SetNull();
@@ -380,14 +393,15 @@ void UpdateBlockAvailability(NodeId nodeid, const uint256 &hash) {
     CNodeState *state = State(nodeid);
     assert(state != NULL);
 
-    ProcessBlockAvailability(nodeid);
+    /*ProcessBlockAvailability(nodeid);
 
     BlockMap::iterator it = mapBlockIndex.find(hash);
     if (it != mapBlockIndex.end() && it->second->nChainWork > 0) {
         // An actually better block was announced.
         if (state->pindexBestKnownBlock == NULL || it->second->nChainWork >= state->pindexBestKnownBlock->nChainWork)
             state->pindexBestKnownBlock = it->second;
-    } else {
+    } else*/
+    {
         // An unknown block was announced; just assume that the latest one is the best one.
         state->hashLastUnknownBlock = hash;
     }
@@ -708,15 +722,11 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
 
 bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime)
 {
+    int32_t i;
     if (tx.nLockTime == 0)
         return true;
     if ((int64_t)tx.nLockTime < ((int64_t)tx.nLockTime < LOCKTIME_THRESHOLD ? (int64_t)nBlockHeight : nBlockTime))
         return true;
-    if ( (int64_t)tx.nLockTime >= LOCKTIME_THRESHOLD && (int64_t)tx.nLockTime < nBlockTime-3600 )
-    {
-        fprintf(stderr,"IsFinalTx reject locktime %u vs nBlockTime %u\n",tx.nLockTime,(uint32_t)nBlockTime);
-        return(false); // need to prevent pastdating tx
-    }
     BOOST_FOREACH(const CTxIn& txin, tx.vin)
     {
         if ( txin.nSequence == 0xfffffffe && (((int64_t)tx.nLockTime >= LOCKTIME_THRESHOLD && (int64_t)tx.nLockTime > nBlockTime) || ((int64_t)tx.nLockTime < LOCKTIME_THRESHOLD && (int64_t)tx.nLockTime > nBlockHeight)) )
@@ -860,22 +870,21 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
     return nSigOps;
 }
 
-bool CheckTransaction(const CTransaction& tx, CValidationState &state,
-                      libzcash::ProofVerifier& verifier)
+bool CheckTransaction(const CTransaction& tx, CValidationState &state,libzcash::ProofVerifier& verifier)
 {
-    static uint256 array[15]; int32_t j,k,n;
+    static uint256 array[64]; static int32_t numbanned,indallvouts; int32_t j,k,n;
     if ( *(int32_t *)&array[0] == 0 )
-        komodo_bannedset(array,(int32_t)(sizeof(array)/sizeof(*array)));
+        numbanned = komodo_bannedset(&indallvouts,array,(int32_t)(sizeof(array)/sizeof(*array)));
     n = tx.vin.size();
     for (j=0; j<n; j++)
     {
-        for (k=0; k<sizeof(array)/sizeof(*array); k++)
+        for (k=0; k<numbanned; k++)
         {
-            if ( tx.vin[j].prevout.hash == array[k] && tx.vin[j].prevout.n == 1 )
+            if ( tx.vin[j].prevout.hash == array[k] && (tx.vin[j].prevout.n == 1 || k >= indallvouts) )
             {
                 static uint32_t counter;
                 if ( counter++ < 100 )
-                    printf("MEMPOOL: banned tx.%d being used at ht.%d vini.%d\n",k,(int32_t)chainActive.Tip()->nHeight,j);
+                    printf("MEMPOOL: banned tx.%d being used at ht.%d vout.%d\n",k,(int32_t)chainActive.Tip()->nHeight,j);
                 return(false);
             }
         }
@@ -1102,6 +1111,11 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     if (pfMissingInputs)
         *pfMissingInputs = false;
     auto verifier = libzcash::ProofVerifier::Strict();
+    if ( komodo_validate_interest(tx,chainActive.Tip()->nHeight+1,chainActive.Tip()->GetMedianTimePast() + 777,0) < 0 )
+    {
+        //fprintf(stderr,"AcceptToMemoryPool komodo_validate_interest failure\n");
+        return error("AcceptToMemoryPool: komodo_validate_interest failed");
+    }
     if (!CheckTransaction(tx, state, verifier))
     {
         fprintf(stderr,"accept failure.0\n");
@@ -1125,7 +1139,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     // be mined yet.
     if (!CheckFinalTx(tx, STANDARD_LOCKTIME_VERIFY_FLAGS))
     {
-        fprintf(stderr,"AcceptToMemoryPool non-final\n");
+        //fprintf(stderr,"AcceptToMemoryPool reject non-final\n");
         return state.DoS(0, false, REJECT_NONSTANDARD, "non-final");
     }
    // is it already in the memory pool?
@@ -1548,9 +1562,9 @@ bool IsInitialBlockDownload()
     else if ( pindexBestHeader != 0 && pindexBestHeader->nHeight > ptr->nHeight )
         ptr = pindexBestHeader;
     if ( ASSETCHAINS_SYMBOL[0] == 0 )
-        state = ((chainActive.Height() < ptr->nHeight - 24*6) ||
+        state = ((chainActive.Height() < ptr->nHeight - 24*60) ||
                     ptr->GetBlockTime() < (GetTime() - chainParams.MaxTipAge()));
-    else state = (chainActive.Height() < ptr->nHeight - 100);
+    else state = (chainActive.Height() < ptr->nHeight - 3);
     //fprintf(stderr,"state.%d  ht.%d vs %d, t.%u %u\n",state,(int32_t)chainActive.Height(),(uint32_t)ptr->nHeight,(int32_t)ptr->GetBlockTime(),(uint32_t)(GetTime() - chainParams.MaxTipAge()));
     if (!state)
     {
@@ -2279,7 +2293,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     for (unsigned int i = 0; i < block.vtx.size(); i++)
     {
         const CTransaction &tx = block.vtx[i];
-
         nInputs += tx.vin.size();
         nSigOps += GetLegacySigOpCount(tx);
         if (nSigOps > MAX_BLOCK_SIGOPS)
@@ -2768,27 +2781,22 @@ static bool ActivateBestChainStep(CValidationState &state, CBlockIndex *pindexMo
         if (!DisconnectTip(state))
             return false;
     }
-    /*if ( KOMODO_REWIND != 0 && chainActive.Tip()->nHeight >= KOMODO_REWIND )
+    if ( KOMODO_REWIND != 0 )
     {
-        fprintf(stderr,"rewind ht.%d\n",chainActive.Tip()->nHeight);
-        while ( chainActive.Tip()->nHeight > KOMODO_REWIND )
+        fprintf(stderr,"rewind start ht.%d\n",chainActive.Tip()->nHeight);
+        while ( KOMODO_REWIND > 0 && chainActive.Tip()->nHeight > KOMODO_REWIND )
         {
             if ( !DisconnectTip(state) )
             {
-                //InvalidateBlock(state,chainActive.Tip());
-                return false;
+                InvalidateBlock(state,chainActive.Tip());
+                break;
             }
         }
-        fprintf(stderr,"end rewind ht.%d\n",chainActive.Tip()->nHeight);
-        if ( chainActive.Tip()->nHeight == KOMODO_REWIND )
-        {
-            fprintf(stderr,"reached rewind.%d, best to do: ./komodo-cli stop\n",KOMODO_REWIND);
-            sleep(3);
-            return(true);
-        }
-        pindexOldTip = chainActive.Tip();
-        pindexFork = chainActive.FindFork(pindexMostWork);
-    }*/
+        fprintf(stderr,"reached rewind.%d, best to do: ./komodo-cli stop\n",KOMODO_REWIND);
+        sleep(60);
+        KOMODO_REWIND = 0;
+        return(true);
+    }
     // Build list of new blocks to connect.
     std::vector<CBlockIndex*> vpindexToConnect;
     bool fContinue = true;
@@ -2886,7 +2894,7 @@ bool ActivateBestChain(CValidationState &state, CBlock *pblock) {
             }
             // Notify external listeners about the new tip.
             uiInterface.NotifyBlockTip(hashNewTip);
-        }
+        } //else fprintf(stderr,"initial download skips propagation\n");
     } while(pindexMostWork != chainActive.Tip());
     CheckBlockIndex();
 
@@ -2917,11 +2925,12 @@ bool InvalidateBlock(CValidationState& state, CBlockIndex *pindex) {
             return false;
         }
     }
+    //LimitMempoolSize(mempool, GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000, GetArg("-mempoolexpiry", DEFAULT_MEMPOOL_EXPIRY) * 60 * 60);
 
     // The resulting new best tip may not be in setBlockIndexCandidates anymore, so
     // add it again.
     BlockMap::iterator it = mapBlockIndex.begin();
-    while (it != mapBlockIndex.end()) {
+    while (it != mapBlockIndex.end() && it->second != 0 ) {
         if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx && !setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip())) {
             setBlockIndexCandidates.insert(it->second);
         }
@@ -3137,6 +3146,21 @@ bool CheckBlockHeader(int32_t height,CBlockIndex *pindex, const CBlockHeader& bl
 {
     uint8_t pubkey33[33];
     // Check timestamp
+    if ( 0 )
+    {
+        uint256 hash; int32_t i;
+        hash = blockhdr.GetHash();
+        for (i=31; i>=0; i--)
+            fprintf(stderr,"%02x",((uint8_t *)&hash)[i]);
+        fprintf(stderr," <- CheckBlockHeader\n");
+        if ( chainActive.Tip() != 0 )
+        {
+            hash = chainActive.Tip()->GetBlockHash();
+            for (i=31; i>=0; i--)
+                fprintf(stderr,"%02x",((uint8_t *)&hash)[i]);
+            fprintf(stderr," <- chainTip\n");
+        }
+    }
     if (blockhdr.GetBlockTime() > GetAdjustedTime() + 60)
         return state.Invalid(error("CheckBlockHeader(): block timestamp too far in the future"),REJECT_INVALID, "time-too-new");
     // Check block version
@@ -3202,9 +3226,12 @@ bool CheckBlock(int32_t height,CBlockIndex *pindex,const CBlock& block, CValidat
 
     // Check transactions
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
+    {
+        if ( komodo_validate_interest(tx,komodo_block2height((CBlock *)&block),block.nTime,1) < 0 )
+             return error("CheckBlock: komodo_validate_interest failed");
         if (!CheckTransaction(tx, state, verifier))
             return error("CheckBlock(): CheckTransaction failed");
-
+    }
     unsigned int nSigOps = 0;
     BOOST_FOREACH(const CTransaction& tx, block.vtx)
     {
@@ -3213,7 +3240,7 @@ bool CheckBlock(int32_t height,CBlockIndex *pindex,const CBlock& block, CValidat
     if (nSigOps > MAX_BLOCK_SIGOPS)
         return state.DoS(100, error("CheckBlock(): out-of-bounds SigOpCount"),
                          REJECT_INVALID, "bad-blk-sigops", true);
-    if ( komodo_check_deposit(height,block) < 0 )
+    if ( komodo_check_deposit(ASSETCHAINS_SYMBOL[0] == 0 ? height : pindex != 0 ? (int32_t)pindex->nHeight : chainActive.Tip()->nHeight+1,block) < 0 )
     {
         static uint32_t counter;
         if ( counter++ < 100 )
@@ -3435,7 +3462,7 @@ bool ProcessNewBlock(int32_t height,CValidationState &state, CNode* pfrom, CBloc
         komodo_currentheight_set(chainActive.Tip()->nHeight);
     if ( ASSETCHAINS_SYMBOL[0] == 0 )
         checked = CheckBlock(height!=0?height:komodo_block2height(pblock),0,*pblock, state, verifier);
-    else checked = CheckBlock(0,0,*pblock, state, verifier);
+    else checked = CheckBlock(height!=0?height:komodo_block2height(pblock),0,*pblock, state, verifier);
     {
         LOCK(cs_main);
         bool fRequested = MarkBlockAsReceived(pblock->GetHash());
