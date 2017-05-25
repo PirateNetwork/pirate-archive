@@ -186,7 +186,7 @@ int32_t komodo_parsestatefile(struct komodo_state *sp,FILE *fp,char *symbol,char
         return(func);
     } else return(-1);
 }
-                    
+
 void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotaries,uint8_t notaryid,uint256 txhash,uint64_t voutmask,uint8_t numvouts,uint32_t *pvals,uint8_t numpvals,int32_t KMDheight,uint32_t KMDtimestamp,uint64_t opretvalue,uint8_t *opretbuf,uint16_t opretlen,uint16_t vout)
 {
     static FILE *fp; static int32_t errs,didinit;
@@ -446,7 +446,7 @@ int32_t komodo_voutupdate(int32_t *isratificationp,int32_t notaryid,uint8_t *scr
                     printf("ISRATIFICATION (%s)\n",(char *)&scriptbuf[len+32*2+4]);
                 }
             }
-            
+
             if ( *isratificationp == 0 && (signedmask != 0 || (scriptbuf[len] != 'X' && scriptbuf[len] != 'A')) ) // && scriptbuf[len] != 'I')
                 komodo_stateupdate(height,0,0,0,txhash,0,0,0,0,0,0,value,&scriptbuf[len],opretlen,j);
         }
@@ -537,12 +537,12 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
                             printf("%02x",scriptPubKey[k]);
                         printf(" scriptPubKey doesnt match any notary vini.%d of %d\n",j,numvins);
                     }
-                } else printf("cant get scriptPubKey for ht.%d txi.%d vin.%d\n",height,i,j);
+                }// else printf("cant get scriptPubKey for ht.%d txi.%d vin.%d\n",height,i,j); //ca333
             }
             numvalid = bitweight(signedmask);
             if ( (((height < 90000 || (signedmask & 1) != 0) && numvalid >= KOMODO_MINRATIFY) || numvalid > (numnotaries/5)) )
             {
-                printf("%s ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d <<<<<<<<<<< notarized\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts);
+                //printf("%s ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d <<<<<<<<<<< notarized\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts); //ca333
                 notarized = 1;
             }
             if ( NOTARY_PUBKEY33[0] != 0 && ASSETCHAINS_SYMBOL[0] == 0 )
