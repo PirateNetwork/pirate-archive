@@ -443,7 +443,7 @@ int32_t komodo_voutupdate(int32_t *isratificationp,int32_t notaryid,uint8_t *scr
                 if ( k == 32 )
                 {
                     *isratificationp = 1;
-                    printf("ISRATIFICATION (%s)\n",(char *)&scriptbuf[len+32*2+4]);
+                    //printf("ISRATIFICATION (%s)\n",(char *)&scriptbuf[len+32*2+4]); //ca333
                 }
             }
 
@@ -619,7 +619,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
                     {
                         memset(&txhash,0,sizeof(txhash));
                         komodo_stateupdate(height,pubkeys,numvalid,0,txhash,0,0,0,0,0,0,0,0,0,0);
-                        printf("RATIFIED! >>>>>>>>>> new notaries.%d newheight.%d from height.%d\n",numvalid,(((height+KOMODO_ELECTION_GAP/2)/KOMODO_ELECTION_GAP)+1)*KOMODO_ELECTION_GAP,height);
+                        //printf("RATIFIED! >>>>>>>>>> new notaries.%d newheight.%d from height.%d\n",numvalid,(((height+KOMODO_ELECTION_GAP/2)/KOMODO_ELECTION_GAP)+1)*KOMODO_ELECTION_GAP,height); //ca333
                     } else printf("signedmask.%llx numvalid.%d wt.%d numnotaries.%d\n",(long long)signedmask,numvalid,bitweight(signedmask),numnotaries);
                 }
             }
