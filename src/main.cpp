@@ -1209,13 +1209,13 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // are the actual inputs available?
         if (!view.HaveInputs(tx))
         {
-            //fprintf(stderr,"accept failure.1\n");
+            //fprintf(stderr,"accept failure.1\n"); //ca333
             return state.Invalid(error("AcceptToMemoryPool: inputs already spent"),REJECT_DUPLICATE, "bad-txns-inputs-spent");
         }
         // are the joinsplit's requirements met?
         if (!view.HaveJoinSplitRequirements(tx))
         {
-            fprintf(stderr,"accept failure.2\n");
+            //fprintf(stderr,"accept failure.2\n"); //ca333
             return state.Invalid(error("AcceptToMemoryPool: joinsplit requirements not met"),REJECT_DUPLICATE, "bad-txns-joinsplit-requirements-not-met");
         }
 
@@ -1245,7 +1245,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         nSigOps += GetP2SHSigOpCount(tx, view);
         if (nSigOps > MAX_STANDARD_TX_SIGOPS)
         {
-            fprintf(stderr,"accept failure.4\n");
+            //fprintf(stderr,"accept failure.4\n"); //ca333
             return state.DoS(0, error("AcceptToMemoryPool: too many sigops %s, %d > %d", hash.ToString(), nSigOps, MAX_STANDARD_TX_SIGOPS),REJECT_NONSTANDARD, "bad-txns-too-many-sigops");
         }
 
@@ -1271,7 +1271,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
 
         // Require that free transactions have sufficient priority to be mined in the next block.
         if (GetBoolArg("-relaypriority", false) && nFees < ::minRelayTxFee.GetFee(nSize) && !AllowFree(view.GetPriority(tx, chainActive.Height() + 1))) {
-            fprintf(stderr,"accept failure.6\n");
+            //fprintf(stderr,"accept failure.6\n"); //ca333
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "insufficient priority");
         }
 
@@ -1294,7 +1294,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
             // At default rate it would take over a month to fill 1GB
             if (dFreeCount >= GetArg("-limitfreerelay", 15)*10*1000)
             {
-                fprintf(stderr,"accept failure.7\n");
+                //fprintf(stderr,"accept failure.7\n"); //ca333
                 return state.DoS(0, error("AcceptToMemoryPool: free transaction rejected by rate limiter"), REJECT_INSUFFICIENTFEE, "rate limited free transaction");
             }
             LogPrint("mempool", "Rate limit dFreeCount: %g => %g\n", dFreeCount, dFreeCount+nSize);
@@ -1303,7 +1303,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
 
         if (fRejectAbsurdFee && nFees > ::minRelayTxFee.GetFee(nSize) * 10000 && nFees > nValueOut/20 )
         {
-            fprintf(stderr,"accept failure.8\n");
+            //fprintf(stderr,"accept failure.8\n"); //ca333
             return error("AcceptToMemoryPool: absurdly high fees %s, %d > %d",hash.ToString(), nFees, ::minRelayTxFee.GetFee(nSize) * 10000);
         }
 
@@ -1311,7 +1311,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!ContextualCheckInputs(tx, state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS, true, Params().GetConsensus()))
         {
-            fprintf(stderr,"accept failure.9\n");
+            //fprintf(stderr,"accept failure.9\n"); //ca333
             return error("AcceptToMemoryPool: ConnectInputs failed %s", hash.ToString());
         }
 
@@ -1326,7 +1326,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // can be exploited as a DoS attack.
         if (!ContextualCheckInputs(tx, state, view, true, MANDATORY_SCRIPT_VERIFY_FLAGS, true, Params().GetConsensus()))
         {
-            fprintf(stderr,"accept failure.10\n");
+            //fprintf(stderr,"accept failure.10\n"); //ca333
             return error("AcceptToMemoryPool: BUG! PLEASE REPORT THIS! ConnectInputs failed against MANDATORY but not STANDARD flags %s", hash.ToString());
         }
 
