@@ -88,7 +88,7 @@ int32_t komodo_parsestatefile(struct komodo_state *sp,FILE *fp,char *symbol,char
                     if ( (KOMODO_EXTERNAL_NOTARIES != 0 && matched != 0) || (strcmp(symbol,"KMD") == 0 && KOMODO_EXTERNAL_NOTARIES == 0) )
                         komodo_eventadd_pubkeys(sp,symbol,ht,num,pubkeys);
                 }
-            } else printf("illegal num.%d\n",num);
+            } else fprintf(stderr, "illegal num.%d\n",num);
         }
         else if ( func == 'N' )
         {
@@ -635,7 +635,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
             }
         }
         if ( NOTARY_PUBKEY33[0] != 0 && ASSETCHAINS_SYMBOL[0] == 0 )
-            printf("%s ht.%d\n",ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL,height);
+            fprintf(stderr, "%s ht.%d\n",ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL,height);
         if ( pindex->nHeight == hwmheight )
             komodo_stateupdate(height,0,0,0,zero,0,0,0,0,height,(uint32_t)pindex->nTime,0,0,0,0);
     } else fprintf(stderr,"komodo_connectblock: unexpected null pindex\n");

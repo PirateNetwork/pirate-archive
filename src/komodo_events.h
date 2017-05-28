@@ -99,7 +99,7 @@ void komodo_event_undo(struct komodo_state *sp,struct komodo_event *ep)
 {
     switch ( ep->type )
     {
-        case KOMODO_EVENT_RATIFY: printf("rewind of ratify, needs to be coded.%d\n",ep->height); break;
+        case KOMODO_EVENT_RATIFY: fprintf(stderr, "rewind of ratify, needs to be coded.%d\n",ep->height); break;
         case KOMODO_EVENT_NOTARIZED: break;
         case KOMODO_EVENT_KMDHEIGHT:
             if ( ep->height <= sp->SAVEDHEIGHT )

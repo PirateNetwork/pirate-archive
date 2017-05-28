@@ -539,12 +539,12 @@ uint64_t _komodo_paxpriceB(uint64_t seed,int32_t height,char *base,char *rel,uin
     int32_t i,j,k,ind,zeroes,numvotes,wt,nonz; int64_t delta; uint64_t lastprice,tolerance,den,densum,sum=0,votes[sizeof(Peggy_inds)/sizeof(*Peggy_inds)],btcusds[sizeof(Peggy_inds)/sizeof(*Peggy_inds)],kmdbtcs[sizeof(Peggy_inds)/sizeof(*Peggy_inds)],kmdbtc,btcusd;
     if ( basevolume > KOMODO_PAXMAX )
     {
-        printf("komodo_paxprice overflow %.8f\n",dstr(basevolume));
+        fprintf(stderr, "komodo_paxprice overflow %.8f\n",dstr(basevolume));
         return(0);
     }
     if ( strcmp(base,"KMD") == 0 || strcmp(base,"kmd") == 0 )
     {
-        printf("kmd cannot be base currency\n");
+        fprintf(stderr, "kmd cannot be base currency\n");
         return(0);
     }
     numvotes = (int32_t)(sizeof(Peggy_inds)/sizeof(*Peggy_inds));

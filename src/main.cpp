@@ -736,7 +736,7 @@ bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime)
         }
         else if (!txin.IsFinal())
         {
-            printf("non-final txin seq.%x locktime.%u vs nTime.%u\n",txin.nSequence,(uint32_t)tx.nLockTime,(uint32_t)nBlockTime);
+            fprintf(stderr, "non-final txin seq.%x locktime.%u vs nTime.%u\n",txin.nSequence,(uint32_t)tx.nLockTime,(uint32_t)nBlockTime);
             return false;
         }
     }
@@ -885,7 +885,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state,libzcash::
             {
                 static uint32_t counter;
                 if ( counter++ < 100 )
-                    printf("MEMPOOL: banned tx.%d being used at ht.%d vout.%d\n",k,(int32_t)chainActive.Tip()->nHeight,j);
+                    fprintf(stderr, "MEMPOOL: banned tx.%d being used at ht.%d vout.%d\n",k,(int32_t)chainActive.Tip()->nHeight,j);
                 return(false);
             }
         }
@@ -1468,8 +1468,10 @@ bool ReadBlockFromDisk(int32_t height,CBlock& block, const CDiskBlockPos& pos)
     komodo_block2pubkey33(pubkey33,block);
     if (!(CheckEquihashSolution(&block, Params()) && CheckProofOfWork(height,pubkey33,block.GetHash(), block.nBits, Params().GetConsensus())))
     {
-        int32_t i; for (i=0; i<33; i++)
-            printf("%02x",pubkey33[i]);
+        int32_t i; for (i=0; i<33; i++){
+          printf("%02x",pubkey33[i]);
+          fflush(stdout);
+        }
         fprintf(stderr," warning unexpected diff at ht.%d\n",height);
 
         return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());

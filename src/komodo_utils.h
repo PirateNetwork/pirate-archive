@@ -108,13 +108,13 @@ static inline int32_t sha256_vcompress(struct sha256_vstate * md,uint8_t *buf)
         LOAD32H(W[i],buf + (4*i));
     for (i=16; i<64; i++) // fill W[16..63]
         W[i] = Gamma1(W[i - 2]) + W[i - 7] + Gamma0(W[i - 15]) + W[i - 16];
-    
+
 #define RND(a,b,c,d,e,f,g,h,i,ki)                    \
 t0 = h + Sigma1(e) + Ch(e, f, g) + ki + W[i];   \
 t1 = Sigma0(a) + Maj(a, b, c);                  \
 d += t0;                                        \
 h  = t0 + t1;
-    
+
     RND(S[0],S[1],S[2],S[3],S[4],S[5],S[6],S[7],0,0x428a2f98);
     RND(S[7],S[0],S[1],S[2],S[3],S[4],S[5],S[6],1,0x71374491);
     RND(S[6],S[7],S[0],S[1],S[2],S[3],S[4],S[5],2,0xb5c0fbcf);
@@ -344,19 +344,19 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
 {
     uint32_t aa,bb,cc,dd,ee,aaa,bbb,ccc,ddd,eee,X[16];
     int i;
-    
+
     /* load words X */
     for (i = 0; i < 16; i++){
         LOAD32L(X[i], buf + (4 * i));
     }
-    
+
     /* load state */
     aa = aaa = md->state[0];
     bb = bbb = md->state[1];
     cc = ccc = md->state[2];
     dd = ddd = md->state[3];
     ee = eee = md->state[4];
-    
+
     /* round 1 */
     FF(aa, bb, cc, dd, ee, X[ 0], 11);
     FF(ee, aa, bb, cc, dd, X[ 1], 14);
@@ -374,7 +374,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     FF(cc, dd, ee, aa, bb, X[13],  7);
     FF(bb, cc, dd, ee, aa, X[14],  9);
     FF(aa, bb, cc, dd, ee, X[15],  8);
-    
+
     /* round 2 */
     GG(ee, aa, bb, cc, dd, X[ 7],  7);
     GG(dd, ee, aa, bb, cc, X[ 4],  6);
@@ -392,7 +392,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     GG(bb, cc, dd, ee, aa, X[14],  7);
     GG(aa, bb, cc, dd, ee, X[11], 13);
     GG(ee, aa, bb, cc, dd, X[ 8], 12);
-    
+
     /* round 3 */
     HH(dd, ee, aa, bb, cc, X[ 3], 11);
     HH(cc, dd, ee, aa, bb, X[10], 13);
@@ -410,7 +410,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     HH(aa, bb, cc, dd, ee, X[11], 12);
     HH(ee, aa, bb, cc, dd, X[ 5],  7);
     HH(dd, ee, aa, bb, cc, X[12],  5);
-    
+
     /* round 4 */
     II(cc, dd, ee, aa, bb, X[ 1], 11);
     II(bb, cc, dd, ee, aa, X[ 9], 12);
@@ -428,7 +428,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     II(ee, aa, bb, cc, dd, X[ 5],  6);
     II(dd, ee, aa, bb, cc, X[ 6],  5);
     II(cc, dd, ee, aa, bb, X[ 2], 12);
-    
+
     /* round 5 */
     JJ(bb, cc, dd, ee, aa, X[ 4],  9);
     JJ(aa, bb, cc, dd, ee, X[ 0], 15);
@@ -446,7 +446,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     JJ(dd, ee, aa, bb, cc, X[ 6],  8);
     JJ(cc, dd, ee, aa, bb, X[15],  5);
     JJ(bb, cc, dd, ee, aa, X[13],  6);
-    
+
     /* parallel round 1 */
     JJJ(aaa, bbb, ccc, ddd, eee, X[ 5],  8);
     JJJ(eee, aaa, bbb, ccc, ddd, X[14],  9);
@@ -464,7 +464,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     JJJ(ccc, ddd, eee, aaa, bbb, X[10], 14);
     JJJ(bbb, ccc, ddd, eee, aaa, X[ 3], 12);
     JJJ(aaa, bbb, ccc, ddd, eee, X[12],  6);
-    
+
     /* parallel round 2 */
     III(eee, aaa, bbb, ccc, ddd, X[ 6],  9);
     III(ddd, eee, aaa, bbb, ccc, X[11], 13);
@@ -482,7 +482,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     III(bbb, ccc, ddd, eee, aaa, X[ 9], 15);
     III(aaa, bbb, ccc, ddd, eee, X[ 1], 13);
     III(eee, aaa, bbb, ccc, ddd, X[ 2], 11);
-    
+
     /* parallel round 3 */
     HHH(ddd, eee, aaa, bbb, ccc, X[15],  9);
     HHH(ccc, ddd, eee, aaa, bbb, X[ 5],  7);
@@ -500,7 +500,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     HHH(aaa, bbb, ccc, ddd, eee, X[ 0], 13);
     HHH(eee, aaa, bbb, ccc, ddd, X[ 4],  7);
     HHH(ddd, eee, aaa, bbb, ccc, X[13],  5);
-    
+
     /* parallel round 4 */
     GGG(ccc, ddd, eee, aaa, bbb, X[ 8], 15);
     GGG(bbb, ccc, ddd, eee, aaa, X[ 6],  5);
@@ -518,7 +518,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     GGG(eee, aaa, bbb, ccc, ddd, X[ 7],  5);
     GGG(ddd, eee, aaa, bbb, ccc, X[10], 15);
     GGG(ccc, ddd, eee, aaa, bbb, X[14],  8);
-    
+
     /* parallel round 5 */
     FFF(bbb, ccc, ddd, eee, aaa, X[12] ,  8);
     FFF(aaa, bbb, ccc, ddd, eee, X[15] ,  5);
@@ -536,7 +536,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     FFF(ddd, eee, aaa, bbb, ccc, X[ 3] , 13);
     FFF(ccc, ddd, eee, aaa, bbb, X[ 9] , 11);
     FFF(bbb, ccc, ddd, eee, aaa, X[11] , 11);
-    
+
     /* combine results */
     ddd += cc + md->state[1];               /* final result for md->state[0] */
     md->state[1] = md->state[2] + dd + eee;
@@ -544,7 +544,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     md->state[3] = md->state[4] + aa + bbb;
     md->state[4] = md->state[0] + bb + ccc;
     md->state[0] = ddd;
-    
+
     return 0;
 }
 
@@ -621,10 +621,10 @@ int rmd160_vdone(struct rmd160_vstate * md, unsigned char *out)
     }
     /* increase the length of the message */
     md->length += md->curlen * 8;
-    
+
     /* append the '1' bit */
     md->buf[md->curlen++] = (unsigned char)0x80;
-    
+
     /* if the length is currently above 56 bytes we append zeros
      * then compress.  Then we can fall back to padding zeros and length
      * encoding like normal.
@@ -707,13 +707,13 @@ static const uint32_t crc32_tab[] = {
 uint32_t calc_crc32(uint32_t crc,const void *buf,size_t size)
 {
 	const uint8_t *p;
-    
+
 	p = (const uint8_t *)buf;
 	crc = crc ^ ~0U;
-    
+
 	while (size--)
 		crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
-    
+
 	return crc ^ ~0U;
 }
 
@@ -748,9 +748,11 @@ int32_t bitcoin_addr2rmd160(uint8_t *addrtypep,uint8_t rmd160[20],char *coinaddr
             {
                 hash = bits256_doublesha256(0,buf,len);
             }
-            for (i=0; i<len; i++)
-                printf("%02x ",buf[i]);
-            printf("\nhex checkhash.(%s) len.%d mismatch %02x %02x %02x %02x vs %02x %02x %02x %02x\n",coinaddr,len,buf[len-1]&0xff,buf[len-2]&0xff,buf[len-3]&0xff,buf[len-4]&0xff,hash.bytes[31],hash.bytes[30],hash.bytes[29],hash.bytes[28]);
+            for (i=0; i<len; i++){
+							printf("%02x ",buf[i]);
+							fflush(stdout);
+						}
+            fprintf(stderr, "\nhex checkhash.(%s) len.%d mismatch %02x %02x %02x %02x vs %02x %02x %02x %02x\n",coinaddr,len,buf[len-1]&0xff,buf[len-2]&0xff,buf[len-3]&0xff,buf[len-4]&0xff,hash.bytes[31],hash.bytes[30],hash.bytes[29],hash.bytes[28]);
         }
     }
 	return(0);
@@ -867,7 +869,7 @@ int32_t decode_hex(uint8_t *bytes,int32_t n,char *hex)
         if ( n > 0 )
         {
             bytes[0] = unhex(hex[0]);
-            printf("decode_hex n.%d hex[0] (%c) -> %d hex.(%s) [n*2+1: %d] [n*2: %d %c] len.%ld\n",n,hex[0],bytes[0],hex,hex[n*2+1],hex[n*2],hex[n*2],(long)strlen(hex));
+            fprintf(stderr, "decode_hex n.%d hex[0] (%c) -> %d hex.(%s) [n*2+1: %d] [n*2: %d %c] len.%ld\n",n,hex[0],bytes[0],hex,hex[n*2+1],hex[n*2],hex[n*2],(long)strlen(hex));
         }
         bytes++;
         hex++;
@@ -1031,7 +1033,7 @@ char *clonestr(char *str)
     char *clone;
     if ( str == 0 || str[0] == 0 )
     {
-        printf("warning cloning nullstr.%p\n",str);
+        fprintf(stderr, "warning cloning nullstr.%p\n",str);
 #ifdef __APPLE__
         while ( 1 ) boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
 #endif
@@ -1135,7 +1137,7 @@ void queue_enqueue(char *name,queue_t *queue,struct queueitem *item)
         strcpy(queue->name,name);
     if ( item == 0 )
     {
-        printf("FATAL type error: queueing empty value\n");
+        fprintf(stderr, "FATAL type error: queueing empty value\n");
         return;
     }
     lock_queue(queue);
@@ -1168,7 +1170,7 @@ void *queue_delete(queue_t *queue,struct queueitem *copy,int32_t copysize)
             {
                 DL_DELETE(queue->list,item);
                 portable_mutex_unlock(&queue->mutex);
-                printf("name.(%s) deleted item.%p list.%p\n",queue->name,item,queue->list);
+                fprintf(stderr, "name.(%s) deleted item.%p list.%p\n",queue->name,item,queue->list);
                 return(item);
             }
         }
@@ -1271,7 +1273,7 @@ void komodo_statefname(char *fname,char *symbol,char *str)
             fname[len - n] = 0;
         else
         {
-            printf("unexpected fname.(%s) vs %s [%s] n.%d len.%d (%s)\n",fname,symbol,ASSETCHAINS_SYMBOL,n,len,&fname[len - n]);
+            fprintf(stderr, "unexpected fname.(%s) vs %s [%s] n.%d len.%d (%s)\n",fname,symbol,ASSETCHAINS_SYMBOL,n,len,&fname[len - n]);
             return;
         }
     }
@@ -1327,7 +1329,7 @@ void komodo_configfile(char *symbol,uint16_t port)
                 fprintf(fp,"rpcuser=user%u\nrpcpassword=pass%s\nrpcport=%u\nserver=1\ntxindex=1\n\n",crc,password,port);
                 fclose(fp);
                 printf("Created (%s)\n",fname);
-            } else printf("Couldnt create (%s)\n",fname);
+            } else fprintf(stderr, "Couldnt create (%s)\n",fname);
         }
         else
         {
@@ -1358,7 +1360,7 @@ void komodo_configfile(char *symbol,uint16_t port)
         sprintf(KMDUSERPASS,"%s:%s",username,password);
         fclose(fp);
 //printf("KOMODO.(%s) -> userpass.(%s)\n",fname,KMDUSERPASS);
-    } else printf("couldnt open.(%s)\n",fname);
+    } else fprintf(stderr, "couldnt open.(%s)\n",fname);
 }
 
 int32_t komodo_userpass(char *userpass,char *symbol)
@@ -1443,7 +1445,7 @@ char *iguanafmtstr = (char *)"curl --url \"http://127.0.0.1:7778\" --data \"{\\\
 
 int32_t komodo_whoami(char *pubkeystr,int32_t height)
 {
-    int32_t i,notaryid; 
+    int32_t i,notaryid;
     for (i=0; i<33; i++)
         sprintf(&pubkeystr[i<<1],"%02x",NOTARY_PUBKEY33[i]);
     pubkeystr[66] = 0;
@@ -1578,6 +1580,3 @@ struct komodo_state *komodo_stateptr(char *symbol,char *dest)
     komodo_nameset(symbol,dest,ASSETCHAINS_SYMBOL);
     return(komodo_stateptrget(symbol));
 }
-
-
-
