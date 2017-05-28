@@ -47,7 +47,7 @@ double GetDifficultyINTERNAL(const CBlockIndex* blockindex, bool networkDifficul
     int nShiftAmount = (powLimit >> 24) & 0xff;
 
     double dDiff =
-        (double)(powLimit & 0x00ffffff) / 
+        (double)(powLimit & 0x00ffffff) /
         (double)(bits & 0x00ffffff);
 
     while (nShift < nShiftAmount)
@@ -318,9 +318,11 @@ uint256 _komodo_getblockhash(int32_t nHeight)
         CBlockIndex* pblockindex = chainActive[nHeight];
         hash = pblockindex->GetBlockHash();
         int32_t i;
-        for (i=0; i<32; i++)
-            printf("%02x",((uint8_t *)&hash)[i]);
-        printf(" blockhash.%d\n",nHeight);
+        for (i=0; i<32; i++){
+          printf("%02x",((uint8_t *)&hash)[i]);
+          fflush(stdout);
+        }
+        fprintf(stderr, " blockhash.%d\n",nHeight);
     } else memset(&hash,0,sizeof(hash));
     return(hash);
 }
@@ -590,14 +592,14 @@ UniValue minerids(const UniValue& params, bool fHelp)
                 for (j=0; j<33; j++)
                     sprintf(&hexstr[j*2],"%02x",pubkeys[i][j]);
                 item.push_back(Pair("notaryid", i));
-                
+
                 bitcoin_address(kmdaddr,60,pubkeys[i],33);
                 m = (int32_t)strlen(kmdaddr);
                 kmdaddress.resize(m);
                 ptr = (char *)kmdaddress.data();
                 memcpy(ptr,kmdaddr,m);
                 item.push_back(Pair("KMDaddress", kmdaddress));
-                
+
                 item.push_back(Pair("pubkey", hex));
                 item.push_back(Pair("blocks", tally[i]));
                 a.push_back(item);
@@ -759,7 +761,7 @@ UniValue paxprices(const UniValue& params, bool fHelp)
         else
         {
             CBlockIndex *pblockindex = chainActive[heights[i]];
-            
+
             item.push_back(Pair("t", (int64_t)pblockindex->nTime));
             item.push_back(Pair("p", (double)prices[i] / COIN));
             a.push_back(item);

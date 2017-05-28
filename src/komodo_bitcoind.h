@@ -90,13 +90,13 @@ char *post_process_bitcoind_RPC(char *debugstr,char *command,char *rpcstr,char *
     if ( command == 0 || rpcstr == 0 || rpcstr[0] == 0 )
     {
         if ( strcmp(command,"signrawtransaction") != 0 )
-            printf("<<<<<<<<<<< bitcoind_RPC: %s post_process_bitcoind_RPC.%s.[%s]\n",debugstr,command,rpcstr);
+            fprintf(stderr, "<<<<<<<<<<< bitcoind_RPC: %s post_process_bitcoind_RPC.%s.[%s]\n",debugstr,command,rpcstr);
         return(rpcstr);
     }
     json = cJSON_Parse(rpcstr);
     if ( json == 0 )
     {
-        printf("<<<<<<<<<<< bitcoind_RPC: %s post_process_bitcoind_RPC.%s can't parse.(%s) params.(%s)\n",debugstr,command,rpcstr,params);
+        fprintf(stderr, "<<<<<<<<<<< bitcoind_RPC: %s post_process_bitcoind_RPC.%s can't parse.(%s) params.(%s)\n",debugstr,command,rpcstr,params);
         free(rpcstr);
         return(0);
     }
@@ -118,7 +118,7 @@ char *post_process_bitcoind_RPC(char *debugstr,char *command,char *rpcstr,char *
         else if ( (error->type&0xff) != cJSON_NULL || (result->type&0xff) != cJSON_NULL )
         {
             if ( strcmp(command,"signrawtransaction") != 0 )
-                printf("<<<<<<<<<<< bitcoind_RPC: %s post_process_bitcoind_RPC (%s) error.%s\n",debugstr,command,rpcstr);
+                fprintf(stderr, "<<<<<<<<<<< bitcoind_RPC: %s post_process_bitcoind_RPC (%s) error.%s\n",debugstr,command,rpcstr);
         }
         free(rpcstr);
     } else retstr = rpcstr;
@@ -151,7 +151,7 @@ char *bitcoind_RPC(char **retstrp,char *debugstr,char *url,char *userpass,char *
     if ( url[0] == 0 )
         strcpy(url,"http://127.0.0.1:7876/nxt");
     if ( specialcase != 0 && 0 )
-        printf("<<<<<<<<<<< bitcoind_RPC: debug.(%s) url.(%s) command.(%s) params.(%s)\n",debugstr,url,command,params);
+        fprintf(stderr, "<<<<<<<<<<< bitcoind_RPC: debug.(%s) url.(%s) command.(%s) params.(%s)\n",debugstr,url,command,params);
 try_again:
     if ( retstrp != 0 )
         *retstrp = 0;
@@ -213,7 +213,7 @@ try_again:
         numretries++;
         if ( specialcase != 0 )
         {
-            printf("<<<<<<<<<<< bitcoind_RPC.(%s): BTCD.%s timeout params.(%s) s.ptr.(%s) err.%d\n",url,command,params,s.ptr,res);
+            fprintf(stderr, "<<<<<<<<<<< bitcoind_RPC.(%s): BTCD.%s timeout params.(%s) s.ptr.(%s) err.%d\n",url,command,params,s.ptr,res);
             free(s.ptr);
             return(0);
         }
@@ -403,11 +403,11 @@ int32_t komodo_verifynotarizedscript(int32_t height,uint8_t *script,int32_t len,
     if ( hash == NOTARIZED_HASH )
         return(0);
     for (i=0; i<32; i++)
-        printf("%02x",((uint8_t *)&NOTARIZED_HASH)[i]);
-    printf(" notarized, ");
+        fprintf(stderr, "%02x",((uint8_t *)&NOTARIZED_HASH)[i]);
+    fprintf(stderr, " notarized, ");
     for (i=0; i<32; i++)
-        printf("%02x",((uint8_t *)&hash)[i]);
-    printf(" opreturn from [%s] ht.%d\n",ASSETCHAINS_SYMBOL,height);
+        fprintf(stderr, "%02x",((uint8_t *)&hash)[i]);
+    fprintf(stderr, " opreturn from [%s] ht.%d\n",ASSETCHAINS_SYMBOL,height);
     return(-1);
 }
 
@@ -442,7 +442,7 @@ int32_t komodo_verifynotarization(char *symbol,char *dest,int32_t height,int32_t
     }
     else
     {
-        printf("[%s] verifynotarization error unexpected dest.(%s)\n",ASSETCHAINS_SYMBOL,dest);
+        fprintf(stderr, "[%s] verifynotarization error unexpected dest.(%s)\n",ASSETCHAINS_SYMBOL,dest);
         return(-1);
     }
     if ( jsonstr != 0 )
@@ -491,7 +491,7 @@ uint256 komodo_getblockhash(int32_t height)
             }
             free_json(result);
         }
-        printf("KMD hash.%d (%s) %x\n",height,jsonstr,*(uint32_t *)&hash);
+        fprintf(stderr, "KMD hash.%d (%s) %x\n",height,jsonstr,*(uint32_t *)&hash);
         free(jsonstr);
     }
     return(hash);
@@ -514,9 +514,12 @@ uint64_t komodo_seed(int32_t height)
         if ( memcmp(&hash,&zero,sizeof(hash)) == 0 )
             hash = komodo_getblockhash(height);
         int32_t i;
-        for (i=0; i<32; i++)
-            printf("%02x",((uint8_t *)&hash)[i]);
+        for (i=0; i<32; i++){
+          printf("%02x",((uint8_t *)&hash)[i]);
+          fflush(stdout);
+        }
         printf(" seed.%d\n",height);
+        fflush(stdout);
         seed = arith_uint256(hash.GetHex()).GetLow64();
     }
     else

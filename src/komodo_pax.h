@@ -185,7 +185,7 @@ int32_t dpow_readprices(uint8_t *data,uint32_t *timestampp,double *KMDBTCp,doubl
     len += iguana_rwnum(0,&data[len],sizeof(uint32_t),(void *)&n);
     if ( n != 35 )
     {
-        printf("dpow_readprices illegal n.%d\n",n);
+        fprintf(stderr, "dpow_readprices illegal n.%d\n",n);
         return(-1);
     }
     len += iguana_rwnum(0,&data[len],sizeof(uint32_t),(void *)&kmdbtc); // /= 1000
@@ -242,25 +242,29 @@ int32_t komodo_pax_opreturn(uint8_t *opret,int32_t maxsize)
                     {
                         if ( 0 && lastcrc != crc32 )
                         {
-                            for (i=0; i<32; i++)
-                                printf("%u ",pvals[i]);
-                            printf("t%u n.%d KMD %f BTC %f CNY %f (%f)\n",timestamp,n,KMDBTC,BTCUSD,CNYUSD,CNYUSD!=0?1./CNYUSD:0);
+                            for (i=0; i<32; i++){
+                              printf("%u ",pvals[i]);
+                              fflush(stdout);
+                            }
+                            fprintf(stderr, "t%u n.%d KMD %f BTC %f CNY %f (%f)\n",timestamp,n,KMDBTC,BTCUSD,CNYUSD,CNYUSD!=0?1./CNYUSD:0);
                         }
                         if ( timestamp > time(NULL)-600 )
                         {
                             n = komodo_opreturnscript(opret,'P',data+sizeof(crc32),(int32_t)(fsize-sizeof(crc32)));
                             if ( 0 && lastcrc != crc32 )
                             {
-                                for (i=0; i<n; i++)
-                                    printf("%02x",opret[i]);
-                                printf(" coinbase opret[%d] crc32.%u:%u\n",n,crc32,check);
+                                for (i=0; i<n; i++){
+                                  printf("%02x",opret[i]);
+                                  fflush(stdout);
+                                }
+                                fprintf(stderr, " coinbase opret[%d] crc32.%u:%u\n",n,crc32,check);
                             }
                         } //else printf("t%u too old for %u\n",timestamp,(uint32_t)time(NULL));
                         lastcrc = crc32;
                     }
-                } else printf("crc32 %u mismatch %u\n",crc32,check);
-            } else printf("fread.%d error != fsize.%d\n",retval,fsize);
-        } else printf("fsize.%d > maxsize.%d or data[%d]\n",fsize,maxsize,(int32_t)sizeof(data));
+                } else fprintf(stderr, "crc32 %u mismatch %u\n",crc32,check);
+            } else fprintf(stderr, "fread.%d error != fsize.%d\n",retval,fsize);
+        } else fprintf(stderr, "fsize.%d > maxsize.%d or data[%d]\n",fsize,maxsize,(int32_t)sizeof(data));
         fclose(fp);
     }
     return(n);
@@ -337,7 +341,7 @@ void komodo_pvals(int32_t height,uint32_t *pvals,uint8_t numpvals)
             NUM_PRICES++;
             portable_mutex_unlock(&komodo_mutex);
             if ( 0 )
-                printf("OP_RETURN.%d KMD %.8f BTC %.6f CNY %.6f NUM_PRICES.%d (%llu %llu %llu)\n",height,KMDBTC,BTCUSD,CNYUSD,NUM_PRICES,(long long)kmdbtc,(long long)btcusd,(long long)cnyusd);
+                fprintf(stderr, "OP_RETURN.%d KMD %.8f BTC %.6f CNY %.6f NUM_PRICES.%d (%llu %llu %llu)\n",height,KMDBTC,BTCUSD,CNYUSD,NUM_PRICES,(long long)kmdbtc,(long long)btcusd,(long long)cnyusd);
         }
     }
 }
@@ -409,7 +413,7 @@ uint64_t komodo_paxcalc(int32_t height,uint32_t *pvals,int32_t baseid,int32_t re
     uint32_t pvalb,pvalr; uint64_t price,kmdbtc,btcusd,usdvol,baseusd,usdkmd,baserel,ranked[32];
     if ( basevolume > KOMODO_PAXMAX )
     {
-        printf("paxcalc overflow %.8f\n",dstr(basevolume));
+        fprintf(stderr, "paxcalc overflow %.8f\n",dstr(basevolume));
         return(0);
     }
     if ( (pvalb= pvals[baseid]) != 0 )
@@ -467,8 +471,8 @@ uint64_t komodo_paxcalc(int32_t height,uint32_t *pvals,int32_t baseid,int32_t re
                 basevolume *= (MINDENOMS[relid] / MINDENOMS[baseid]);
             return(komodo_paxvol(basevolume,baserel));
         }
-        else printf("null pval for %s\n",CURRENCIES[relid]);
-    } else printf("null pval for %s\n",CURRENCIES[baseid]);
+        else fprintf(stderr, "null pval for %s\n",CURRENCIES[relid]);
+    } else fprintf(stderr, "null pval for %s\n",CURRENCIES[baseid]);
     return(0);
 }
 
@@ -617,7 +621,7 @@ uint64_t komodo_paxprice(uint64_t *seedp,int32_t height,char *base,char *rel,uin
     if ( ASSETCHAINS_SYMBOL[0] == 0 && chainActive.Tip() != 0 && height > chainActive.Tip()->nHeight )
     {
         if ( height < 100000000 )
-            printf("height.%d vs tip.%d\n",height,chainActive.Tip()->nHeight);
+            fprintf(stderr, "height.%d vs tip.%d\n",height,chainActive.Tip()->nHeight);
         return(0);
     }
     *seedp = komodo_seed(height);
@@ -634,7 +638,7 @@ uint64_t komodo_paxprice(uint64_t *seedp,int32_t height,char *base,char *rel,uin
                 if ( diff < 0 )
                     diff = -diff;
                 diff /= price;
-                printf("(%llu %llu %lld).%lld ",(long long)price,(long long)(sum>>1),(long long)(((int64_t)price - (sum >> 1)) * 10000),(long long)diff);
+                fprintf(stderr, "(%llu %llu %lld).%lld ",(long long)price,(long long)(sum>>1),(long long)(((int64_t)price - (sum >> 1)) * 10000),(long long)diff);
                 if ( diff < 33 )
                     break;
             }
@@ -644,7 +648,7 @@ uint64_t komodo_paxprice(uint64_t *seedp,int32_t height,char *base,char *rel,uin
                 if ( diff < 0 )
                     diff = -diff;
                 diff /= price;
-                printf("(%llu %llu %lld).%lld ",(long long)price,(long long)(sum>>2),(long long) (((int64_t)price - (sum >> 2)) * 10000),(long long)diff);
+                fprintf(stderr, "(%llu %llu %lld).%lld ",(long long)price,(long long)(sum>>2),(long long) (((int64_t)price - (sum >> 2)) * 10000),(long long)diff);
                 if ( diff < 20 )
                     break;
             }
@@ -693,7 +697,7 @@ uint64_t PAX_fiatdest(uint64_t *seedp,int32_t tokomodo,char *destaddr,uint8_t pu
     if ( (baseid= komodo_baseid(origbase)) < 0 || baseid == MAX_CURRENCIES )
     {
         if ( 0 && origbase[0] != 0 )
-            printf("[%s] PAX_fiatdest illegal base.(%s)\n",ASSETCHAINS_SYMBOL,origbase);
+            fprintf(stderr, "[%s] PAX_fiatdest illegal base.(%s)\n",ASSETCHAINS_SYMBOL,origbase);
         return(0);
     }
     for (i=0; i<3; i++)

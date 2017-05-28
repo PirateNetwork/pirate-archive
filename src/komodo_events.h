@@ -42,7 +42,7 @@ void komodo_eventadd_notarized(struct komodo_state *sp,char *symbol,int32_t heig
     if ( komodo_verifynotarization(symbol,dest,height,notarizedheight,notarized_hash,notarized_desttxid) != 0 )
     {
         if ( height > 50000 )
-            printf("[%s] error validating notarization ht.%d notarized_height.%d\n",ASSETCHAINS_SYMBOL,height,notarizedheight);
+            fprintf(stderr, "[%s] error validating notarization ht.%d notarized_height.%d\n",ASSETCHAINS_SYMBOL,height,notarizedheight);
     }
     else
     {
@@ -121,7 +121,7 @@ void komodo_event_rewind(struct komodo_state *sp,char *symbol,int32_t height)
     {
         if ( ASSETCHAINS_SYMBOL[0] == 0 && height <= KOMODO_LASTMINED && prevKOMODO_LASTMINED != 0 )
         {
-            printf("undo KOMODO_LASTMINED %d <- %d\n",KOMODO_LASTMINED,prevKOMODO_LASTMINED);
+            fprintf(stderr, "undo KOMODO_LASTMINED %d <- %d\n",KOMODO_LASTMINED,prevKOMODO_LASTMINED);
             KOMODO_LASTMINED = prevKOMODO_LASTMINED;
             prevKOMODO_LASTMINED = 0;
         }
@@ -199,6 +199,6 @@ void komodo_eventadd_redeemed(int32_t actionflag,char *symbol,int32_t height,bit
 }*/
 
 // process events
-// 
+//
 
 #endif
