@@ -1,17 +1,17 @@
 
 /*
  Copyright (c) 2009 Dave Gamble
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -61,7 +61,7 @@ static char* cJSON_strdup(const char* str)
 {
     size_t len;
     char* copy;
-    
+
     len = strlen(str) + 1;
     if (!(copy = (char*)cJSON_malloc(len+1))) return 0;
     memcpy(copy,str,len);
@@ -75,7 +75,7 @@ void cJSON_InitHooks(cJSON_Hooks* hooks)
         cJSON_free = free;
         return;
     }
-    
+
 	cJSON_malloc = (hooks->malloc_fn)?hooks->malloc_fn:malloc;
 	cJSON_free	 = (hooks->free_fn)?hooks->free_fn:free;
 }
@@ -107,7 +107,7 @@ void cJSON_Delete(cJSON *c)
 static const char *parse_number(cJSON *item,const char *num)
 {
 	double n=0,sign=1,scale=0;int32_t subscale=0,signsubscale=1;
-    
+
 	if (*num=='-') sign=-1,num++;	/* Has sign? */
 	if (*num=='0') num++;			/* is zero */
 	if (*num>='1' && *num<='9')	do	n=(n*10.0)+(*num++ -'0');	while (*num>='0' && *num<='9');	/* Number? */
@@ -116,9 +116,9 @@ static const char *parse_number(cJSON *item,const char *num)
 	{	num++;if (*num=='+') num++;	else if (*num=='-') signsubscale=-1,num++;		/* With sign? */
 		while (*num>='0' && *num<='9') subscale=(subscale*10)+(*num++ - '0');	/* Number? */
 	}
-    
+
 	n=sign*n*pow(10.0,(scale+subscale*signsubscale));	/* number = +/- number.fraction * 10^+/- exponent */
-	
+
 	item->valuedouble=n;
 	item->valueint=(int64_t)n;
 	item->type=cJSON_Number;
@@ -170,12 +170,12 @@ static const char *parse_string(cJSON *item,const char *str)
 {
 	const char *ptr=str+1;char *ptr2;char *out;int32_t len=0;unsigned uc,uc2;
 	if (*str!='\"') {ep=str;return 0;}	/* not a string! */
-	
+
 	while (*ptr!='\"' && *ptr && ++len) if (*ptr++ == '\\') ptr++;	// Skip escaped quotes
-	
+
 	out=(char*)cJSON_malloc(len+2);	/* This is how long we need for the string, roughly. */
 	if (!out) return 0;
-	
+
 	ptr=str+1;ptr2=out;
 	while (*ptr!='\"' && *ptr)
 	{
@@ -197,9 +197,9 @@ static const char *parse_string(cJSON *item,const char *str)
 				case 't': *ptr2++='\t';	break;
 				case 'u':	 // transcode utf16 to utf8
 					uc=parse_hex4(ptr+1);ptr+=4;	// get the unicode char
-                    
+
 					if ((uc>=0xDC00 && uc<=0xDFFF) || uc==0)	break;	// check for invalid
-                    
+
 					if (uc>=0xD800 && uc<=0xDBFF)	// UTF16 surrogate pairs
 					{
 						if (ptr[1]!='\\' || ptr[2]!='u')	break;	// missing second-half of surrogate.
@@ -207,9 +207,9 @@ static const char *parse_string(cJSON *item,const char *str)
 						if (uc2<0xDC00 || uc2>0xDFFF)		break;	// invalid second-half of surrogate
 						uc=0x10000 + (((uc&0x3FF)<<10) | (uc2&0x3FF));
 					}
-                    
+
 					len=4;if (uc<0x80) len=1;else if (uc<0x800) len=2;else if (uc<0x10000) len=3; ptr2+=len;
-					
+
 					switch (len) {
 						case 4: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
 						case 3: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
@@ -234,13 +234,13 @@ static const char *parse_string(cJSON *item,const char *str)
 static char *print_string_ptr(const char *str)
 {
 	const char *ptr;char *ptr2,*out;int32_t len=0;unsigned char token;
-	
+
 	if (!str) return cJSON_strdup("");
 	ptr=str;while ((token=*ptr) && ++len) {if (strchr("\"\\\b\f\n\r\t",token)) len++; else if (token<32) len+=5;ptr++;}
-	
+
 	out=(char*)cJSON_malloc(len+3+1);
 	if (!out) return 0;
-    
+
 	ptr2=out;ptr=str;
 	*ptr2++='\"';
 	while (*ptr)
@@ -286,10 +286,10 @@ cJSON *cJSON_ParseWithOpts(const char *value,const char **return_parse_end,int32
 	cJSON *c=cJSON_New_Item();
 	ep=0;
 	if (!c) return 0;       /* memory fail */
-    
+
 	end=parse_value(c,skip(value));
 	if (!end)	{cJSON_Delete(c);return 0;}	/* parse failure. ep is set. */
-    
+
 	/* if we require null-terminated JSON without appended garbage, skip and then check for a null terminator */
 	if (require_null_terminated) {end=skip(end);if (*end) {cJSON_Delete(c);ep=end;return 0;}}
 	if (return_parse_end) *return_parse_end=end;
@@ -319,7 +319,7 @@ static const char *parse_value(cJSON *item,const char *value)
 	if (*value=='-' || (*value>='0' && *value<='9'))	{ return parse_number(item,value); }
 	if (*value=='[')				{ return parse_array(item,value); }
 	if (*value=='{')				{ return parse_object(item,value); }
-    
+
 	ep=value;return 0;	/* failure. */
 }
 
@@ -346,16 +346,16 @@ static const char *parse_array(cJSON *item,const char *value)
 {
 	cJSON *child;
 	if (*value!='[')	{ep=value;return 0;}	/* not an array! */
-    
+
 	item->type=cJSON_Array;
 	value=skip(value+1);
 	if (*value==']') return value+1;	/* empty array. */
-    
+
 	item->child=child=cJSON_New_Item();
 	if (!item->child) return 0;		 /* memory fail */
 	value=skip(parse_value(child,skip(value)));	/* skip any spacing, get the value. */
 	if (!value) return 0;
-    
+
 	while (*value==',')
 	{
 		cJSON *new_item;
@@ -364,7 +364,7 @@ static const char *parse_array(cJSON *item,const char *value)
 		value=skip(parse_value(child,skip(value+1)));
 		if (!value) return 0;	/* memory fail */
 	}
-    
+
 	if (*value==']') return value+1;	/* end of array */
 	ep=value;return 0;	/* malformed. */
 }
@@ -376,7 +376,7 @@ static char *print_array(cJSON *item,int32_t depth,int32_t fmt)
 	char *out=0,*ptr,*ret;int32_t len=5;
 	cJSON *child=item->child;
 	int32_t numentries=0,i=0,fail=0;
-	
+
 	/* How many entries in the array? */
 	while (child) numentries++,child=child->next;
 	/* Explicitly handle numentries==0 */
@@ -399,12 +399,12 @@ static char *print_array(cJSON *item,int32_t depth,int32_t fmt)
 		if (ret) len+=strlen(ret)+2+(fmt?1:0); else fail=1;
 		child=child->next;
 	}
-	
+
 	/* If we didn't fail, try to malloc the output string */
 	if (!fail) out=(char*)cJSON_malloc(len+1);
 	/* If that fails, we fail. */
 	if (!out) fail=1;
-    
+
 	/* Handle failure. */
 	if (fail)
 	{
@@ -412,7 +412,7 @@ static char *print_array(cJSON *item,int32_t depth,int32_t fmt)
 		cJSON_free(entries);
 		return 0;
 	}
-	
+
 	/* Compose the output array. */
 	*out='[';
 	ptr=out+1;*ptr=0;
@@ -432,11 +432,11 @@ static const char *parse_object(cJSON *item,const char *value)
 {
 	cJSON *child;
 	if (*value!='{')	{ep=value;return 0;}	/* not an object! */
-	
+
 	item->type=cJSON_Object;
 	value=skip(value+1);
 	if (*value=='}') return value+1;	/* empty array. */
-	
+
 	item->child=child=cJSON_New_Item();
 	if (!item->child) return 0;
 	value=skip(parse_string(child,skip(value)));
@@ -445,7 +445,7 @@ static const char *parse_object(cJSON *item,const char *value)
 	if (*value!=':') {ep=value;return 0;}	/* fail! */
 	value=skip(parse_value(child,skip(value+1)));	/* skip any spacing, get the value. */
 	if (!value) return 0;
-	
+
 	while (*value==',')
 	{
 		cJSON *new_item;
@@ -458,7 +458,7 @@ static const char *parse_object(cJSON *item,const char *value)
 		value=skip(parse_value(child,skip(value+1)));	/* skip any spacing, get the value. */
 		if (!value) return 0;
 	}
-	
+
 	if (*value=='}') return value+1;	/* end of array */
 	ep=value;return 0;	/* malformed. */
 }
@@ -478,7 +478,7 @@ static char *print_object(cJSON *item,int32_t depth,int32_t fmt)
         child = child->next;
         if ( child == firstchild )
         {
-            printf("cJSON infinite loop detected\n");
+            fprintf(stderr, "cJSON infinite loop detected\n");
             break;
         }
     }
@@ -499,7 +499,7 @@ static char *print_object(cJSON *item,int32_t depth,int32_t fmt)
 	if (!names) {cJSON_free(entries);return 0;}
 	memset(entries,0,sizeof(char*)*numentries);
 	memset(names,0,sizeof(char*)*numentries);
-    
+
 	/* Collect all the results into our arrays: */
 	child=item->child;depth++;if (fmt) len+=depth;
 	while ( child )
@@ -511,11 +511,11 @@ static char *print_object(cJSON *item,int32_t depth,int32_t fmt)
         if ( child == firstchild )
             break;
 	}
-	
+
 	/* Try to allocate the output string */
 	if (!fail) out=(char*)cJSON_malloc(len+1);
 	if (!out) fail=1;
-    
+
 	/* Handle failure */
 	if (fail)
 	{
@@ -523,7 +523,7 @@ static char *print_object(cJSON *item,int32_t depth,int32_t fmt)
 		cJSON_free(names);cJSON_free(entries);
 		return 0;
 	}
-	
+
 	/* Compose the output: */
 	*out='{';ptr=out+1;if (fmt)*ptr++='\n';*ptr=0;
 	for (i=0;i<numentries;i++)
@@ -536,7 +536,7 @@ static char *print_object(cJSON *item,int32_t depth,int32_t fmt)
 		if (fmt) *ptr++='\n';*ptr=0;
 		cJSON_free(names[i]);cJSON_free(entries[i]);
 	}
-	
+
 	cJSON_free(names);cJSON_free(entries);
 	if (fmt) for (i=0;i<depth-1;i++) *ptr++='\t';
 	*ptr++='}';*ptr++=0;
@@ -795,13 +795,13 @@ uint64_t get_satoshi_obj(cJSON *json,char *field)
     {
         satoshis += (mult * (numstr.buf[i] - '0'));
         if ( satoshis < prev )
-            printf("get_satoshi_obj numstr.(%s) i.%d prev.%llu vs satoshis.%llu\n",numstr.buf,i,(unsigned long long)prev,(unsigned long long)satoshis);
+            fprintf(stderr, "get_satoshi_obj numstr.(%s) i.%d prev.%llu vs satoshis.%llu\n",numstr.buf,i,(unsigned long long)prev,(unsigned long long)satoshis);
         prev = satoshis;
     }
     sprintf(checkstr.buf,"%llu",(long long)satoshis);
     if ( strcmp(checkstr.buf,numstr.buf) != 0 )
     {
-        printf("SATOSHI GREMLIN?? numstr.(%s) -> %.8f -> (%s)\n",numstr.buf,dstr(satoshis),checkstr.buf);
+        fprintf(stderr, "SATOSHI GREMLIN?? numstr.(%s) -> %.8f -> (%s)\n",numstr.buf,dstr(satoshis),checkstr.buf);
     }
     return(satoshis);
 }
@@ -814,7 +814,7 @@ void add_satoshis_json(cJSON *json,char *field,uint64_t satoshis)
     obj = cJSON_CreateString(numstr);
     cJSON_AddItemToObject(json,field,obj);
     if ( satoshis != get_satoshi_obj(json,field) )
-        printf("error adding satoshi obj %ld -> %ld\n",(unsigned long)satoshis,(unsigned long)get_satoshi_obj(json,field));
+        fprintf(stderr, "error adding satoshi obj %ld -> %ld\n",(unsigned long)satoshis,(unsigned long)get_satoshi_obj(json,field));
 }
 
 char *cJSON_str(cJSON *json)
@@ -1077,13 +1077,13 @@ uint64_t calc_nxt64bits(const char *NXTaddr)
     uint64_t lastval,mult,nxt64bits = 0;
     if ( NXTaddr == 0 )
     {
-        printf("calling calc_nxt64bits with null ptr!\n");
+        fprintf(stderr, "calling calc_nxt64bits with null ptr!\n");
         return(0);
     }
     n = strlen(NXTaddr);
     if ( n >= 22 )
     {
-        printf("calc_nxt64bits: illegal NXTaddr.(%s) too long\n",NXTaddr);
+        fprintf(stderr, "calc_nxt64bits: illegal NXTaddr.(%s) too long\n",NXTaddr);
         return(0);
     }
     else if ( strcmp(NXTaddr,"0") == 0 || strcmp(NXTaddr,"false") == 0 )
@@ -1100,25 +1100,25 @@ uint64_t calc_nxt64bits(const char *NXTaddr)
         c = NXTaddr[i];
         if ( c < '0' || c > '9' )
         {
-            printf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
+            fprintf(stderr, "calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
 #ifdef __APPLE__
             //while ( 1 )
             {
                 //sleep(60);
-                printf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
+                fprintf(stderr, "calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
             }
 #endif
             return(0);
         }
         nxt64bits += mult * (c - '0');
         if ( nxt64bits < lastval )
-            printf("calc_nxt64bits: warning: 64bit overflow %llx < %llx\n",(long long)nxt64bits,(long long)lastval);
+            fprintf(stderr, "calc_nxt64bits: warning: 64bit overflow %llx < %llx\n",(long long)nxt64bits,(long long)lastval);
         lastval = nxt64bits;
     }
     while ( *NXTaddr == '0' && *NXTaddr != 0 )
         NXTaddr++;
     if ( cmp_nxt64bits(NXTaddr,nxt64bits) != 0 )
-        printf("error calculating nxt64bits: %s -> %llx -> %s\n",NXTaddr,(long long)nxt64bits,nxt64str(nxt64bits));
+        fprintf(stderr, "error calculating nxt64bits: %s -> %llx -> %s\n",NXTaddr,(long long)nxt64bits,nxt64str(nxt64bits));
     if ( polarity < 0 )
         return(-(int64_t)nxt64bits);
     return(nxt64bits);

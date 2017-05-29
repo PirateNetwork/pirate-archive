@@ -326,19 +326,19 @@ void FinalizeNode(NodeId nodeid) {
 
     mapNodeState.erase(nodeid);
 }
-    
+
 void LimitMempoolSize(CTxMemPool& pool, size_t limit, unsigned long age)
 {
 /*    int expired = pool.Expire(GetTime() - age);
     if (expired != 0)
         LogPrint("mempool", "Expired %i transactions from the memory pool\n", expired);
-    
+
     std::vector<uint256> vNoSpendsRemaining;
     pool.TrimToSize(limit, &vNoSpendsRemaining);
     BOOST_FOREACH(const uint256& removed, vNoSpendsRemaining)
     pcoinsTip->Uncache(removed);*/
 }
-    
+
 // Requires cs_main.
 // Returns a bool indicating whether we requested this block.
 bool MarkBlockAsReceived(const uint256& hash) {
@@ -696,7 +696,7 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
             fprintf(stderr,">>>>>>>>>>>>>>> vout.%d nDataout.%d\n",v,nDataOut);
             return false;
         }
-        
+
         if (whichType == TX_NULL_DATA)
         {
             nDataOut++;
@@ -732,11 +732,11 @@ bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime)
     {
         if ( txin.nSequence == 0xfffffffe && (((int64_t)tx.nLockTime >= LOCKTIME_THRESHOLD && (int64_t)tx.nLockTime > nBlockTime) || ((int64_t)tx.nLockTime < LOCKTIME_THRESHOLD && (int64_t)tx.nLockTime > nBlockHeight)) )
         {
-            
+
         }
         else if (!txin.IsFinal())
         {
-            printf("non-final txin seq.%x locktime.%u vs nTime.%u\n",txin.nSequence,(uint32_t)tx.nLockTime,(uint32_t)nBlockTime);
+            fprintf(stderr, "non-final txin seq.%x locktime.%u vs nTime.%u\n",txin.nSequence,(uint32_t)tx.nLockTime,(uint32_t)nBlockTime);
             return false;
         }
     }
@@ -885,7 +885,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state,libzcash::
             {
                 static uint32_t counter;
                 if ( counter++ < 100 )
-                    printf("MEMPOOL: banned tx.%d being used at ht.%d vout.%d\n",k,(int32_t)chainActive.Tip()->nHeight,j);
+                    fprintf(stderr, "MEMPOOL: banned tx.%d being used at ht.%d vout.%d\n",k,(int32_t)chainActive.Tip()->nHeight,j);
                 return(false);
             }
         }
@@ -1119,7 +1119,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     }
     if (!CheckTransaction(tx, state, verifier))
     {
-        fprintf(stderr,"accept failure.0\n");
+        //fprintf(stderr,"accept failure.0\n"); //ca333
         return error("AcceptToMemoryPool: CheckTransaction failed");
     }
     // Coinbase is only valid in a block, not as a loose transaction
@@ -1209,13 +1209,13 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // are the actual inputs available?
         if (!view.HaveInputs(tx))
         {
-            //fprintf(stderr,"accept failure.1\n");
+            //fprintf(stderr,"accept failure.1\n"); //ca333
             return state.Invalid(error("AcceptToMemoryPool: inputs already spent"),REJECT_DUPLICATE, "bad-txns-inputs-spent");
         }
         // are the joinsplit's requirements met?
         if (!view.HaveJoinSplitRequirements(tx))
         {
-            fprintf(stderr,"accept failure.2\n");
+            //fprintf(stderr,"accept failure.2\n"); //ca333
             return state.Invalid(error("AcceptToMemoryPool: joinsplit requirements not met"),REJECT_DUPLICATE, "bad-txns-joinsplit-requirements-not-met");
         }
 
@@ -1232,7 +1232,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // Check for non-standard pay-to-script-hash in inputs
         if (Params().RequireStandard() && !AreInputsStandard(tx, view))
         {
-            fprintf(stderr,"accept failure.3\n");
+            //fprintf(stderr,"accept failure.3\n"); //ca333
             return error("AcceptToMemoryPool: nonstandard transaction input");
         }
 
@@ -1245,7 +1245,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         nSigOps += GetP2SHSigOpCount(tx, view);
         if (nSigOps > MAX_STANDARD_TX_SIGOPS)
         {
-            fprintf(stderr,"accept failure.4\n");
+            //fprintf(stderr,"accept failure.4\n"); //ca333
             return state.DoS(0, error("AcceptToMemoryPool: too many sigops %s, %d > %d", hash.ToString(), nSigOps, MAX_STANDARD_TX_SIGOPS),REJECT_NONSTANDARD, "bad-txns-too-many-sigops");
         }
 
@@ -1264,14 +1264,14 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
             CAmount txMinFee = GetMinRelayFee(tx, nSize, true);
             if (fLimitFree && nFees < txMinFee)
             {
-                fprintf(stderr,"accept failure.5\n");
+                //fprintf(stderr,"accept failure.5\n"); //ca333
                 return state.DoS(0, error("AcceptToMemoryPool: not enough fees %s, %d < %d",hash.ToString(), nFees, txMinFee),REJECT_INSUFFICIENTFEE, "insufficient fee");
             }
         }
 
         // Require that free transactions have sufficient priority to be mined in the next block.
         if (GetBoolArg("-relaypriority", false) && nFees < ::minRelayTxFee.GetFee(nSize) && !AllowFree(view.GetPriority(tx, chainActive.Height() + 1))) {
-            fprintf(stderr,"accept failure.6\n");
+            //fprintf(stderr,"accept failure.6\n"); //ca333
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "insufficient priority");
         }
 
@@ -1294,7 +1294,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
             // At default rate it would take over a month to fill 1GB
             if (dFreeCount >= GetArg("-limitfreerelay", 15)*10*1000)
             {
-                fprintf(stderr,"accept failure.7\n");
+                //fprintf(stderr,"accept failure.7\n"); //ca333
                 return state.DoS(0, error("AcceptToMemoryPool: free transaction rejected by rate limiter"), REJECT_INSUFFICIENTFEE, "rate limited free transaction");
             }
             LogPrint("mempool", "Rate limit dFreeCount: %g => %g\n", dFreeCount, dFreeCount+nSize);
@@ -1303,7 +1303,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
 
         if (fRejectAbsurdFee && nFees > ::minRelayTxFee.GetFee(nSize) * 10000 && nFees > nValueOut/20 )
         {
-            fprintf(stderr,"accept failure.8\n");
+            //fprintf(stderr,"accept failure.8\n"); //ca333
             return error("AcceptToMemoryPool: absurdly high fees %s, %d > %d",hash.ToString(), nFees, ::minRelayTxFee.GetFee(nSize) * 10000);
         }
 
@@ -1311,7 +1311,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         if (!ContextualCheckInputs(tx, state, view, true, STANDARD_SCRIPT_VERIFY_FLAGS, true, Params().GetConsensus()))
         {
-            fprintf(stderr,"accept failure.9\n");
+            //fprintf(stderr,"accept failure.9\n"); //ca333
             return error("AcceptToMemoryPool: ConnectInputs failed %s", hash.ToString());
         }
 
@@ -1326,7 +1326,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         // can be exploited as a DoS attack.
         if (!ContextualCheckInputs(tx, state, view, true, MANDATORY_SCRIPT_VERIFY_FLAGS, true, Params().GetConsensus()))
         {
-            fprintf(stderr,"accept failure.10\n");
+            //fprintf(stderr,"accept failure.10\n"); //ca333
             return error("AcceptToMemoryPool: BUG! PLEASE REPORT THIS! ConnectInputs failed against MANDATORY but not STANDARD flags %s", hash.ToString());
         }
 
@@ -1468,10 +1468,12 @@ bool ReadBlockFromDisk(int32_t height,CBlock& block, const CDiskBlockPos& pos)
     komodo_block2pubkey33(pubkey33,block);
     if (!(CheckEquihashSolution(&block, Params()) && CheckProofOfWork(height,pubkey33,block.GetHash(), block.nBits, Params().GetConsensus())))
     {
-        int32_t i; for (i=0; i<33; i++)
-            printf("%02x",pubkey33[i]);
+        int32_t i; for (i=0; i<33; i++){
+          printf("%02x",pubkey33[i]);
+          fflush(stdout);
+        }
         fprintf(stderr," warning unexpected diff at ht.%d\n",height);
-        
+
         return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
     }
     return true;
@@ -2445,7 +2447,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
     int64_t nTime4 = GetTimeMicros(); nTimeCallbacks += nTime4 - nTime3;
     LogPrint("bench", "    - Callbacks: %.2fms [%.2fs]\n", 0.001 * (nTime4 - nTime3), nTimeCallbacks * 0.000001);
-    
+
     //FlushStateToDisk();
     komodo_connectblock(pindex,*(CBlock *)&block);
     return true;
@@ -2676,7 +2678,7 @@ static int64_t nTimePostConnect = 0;
  * corresponding to pindexNew, to bypass loading it again from disk.
  */
 bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew, CBlock *pblock) {
-    
+
     assert(pindexNew->pprev == chainActive.Tip());
     mempool.check(pcoinsTip);
     // Read block from disk.
@@ -3215,7 +3217,7 @@ bool CheckBlockHeader(int32_t height,CBlockIndex *pindex, const CBlockHeader& bl
     // Check Equihash solution is valid
     if ( fCheckPOW && !CheckEquihashSolution(&blockhdr, Params()) )
         return state.DoS(100, error("CheckBlockHeader(): Equihash solution invalid"),REJECT_INVALID, "invalid-solution");
-    
+
     // Check proof of work matches claimed amount
     komodo_index2pubkey33(pubkey33,pindex,height);
     if ( fCheckPOW && !CheckProofOfWork(height,pubkey33,blockhdr.GetHash(), blockhdr.nBits, Params().GetConsensus()) )
@@ -5832,4 +5834,3 @@ extern "C" const char* getDataDir()
 {
 	return GetDataDir().string().c_str();
 }
-

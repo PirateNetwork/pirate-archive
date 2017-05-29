@@ -123,7 +123,7 @@ int8_t komodo_minerid(int32_t height,uint8_t *pubkey33);
 void komodo_index2pubkey33(uint8_t *pubkey33,CBlockIndex *pindex,int32_t height);
 extern int32_t KOMODO_CHOSEN_ONE;
 #define KOMODO_ELECTION_GAP 2000
- 
+
 int32_t komodo_eligiblenotary(uint8_t pubkeys[66][33],int32_t *mids,int32_t *nonzpkeysp,int32_t height);
 int32_t KOMODO_LOADINGBLOCKS;
 
@@ -171,17 +171,17 @@ bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash, unsigned in
             //&&  )//186269, 182507&& komodo_chainactive(height) != 0 && nonzpkeys > 0
         {
             for (i=31; i>=0; i--)
-                printf("%02x",((uint8_t *)&hash)[i]);
-            printf(" hash vs ");
+                fprintf(stderr, "%02x",((uint8_t *)&hash)[i]);
+            fprintf(stderr, " hash vs ");
             for (i=31; i>=0; i--)
-                printf("%02x",((uint8_t *)&bnTarget)[i]);
-            printf(" ht.%d special.%d notaryid.%d ht.%d mod.%d error\n",height,special,notaryid,height,(height % 35));
+                fprintf(stderr, "%02x",((uint8_t *)&bnTarget)[i]);
+            fprintf(stderr, " ht.%d special.%d notaryid.%d ht.%d mod.%d error\n",height,special,notaryid,height,(height % 35));
             for (i=0; i<33; i++)
-                printf("%02x",pubkey33[i]);
-            printf(" <- pubkey\n");
+                fprintf(stderr, "%02x",pubkey33[i]);
+            fprintf(stderr, " <- pubkey\n");
             for (i=0; i<66; i++)
-                printf("%d ",mids[i]);
-            printf(" minerids from ht.%d\n",height);
+                fprintf(stderr, "%d ",mids[i]);
+            fprintf(stderr, " minerids from ht.%d\n",height);
             if ( KOMODO_REWIND == 0 && (notaryid >= 0 || height > 225000) )
             {
                 fprintf(stderr,"pow error height.%d loading.%d notaryid.%d\n",height,KOMODO_LOADINGBLOCKS,notaryid);

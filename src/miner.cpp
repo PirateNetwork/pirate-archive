@@ -155,7 +155,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         }
         KOMODO_ON_DEMAND = 0;
         if ( 0 && deposits != 0 )
-            printf("miner KOMODO_DEPOSIT %llu pblock->nHeight %d mempool.GetTotalTxSize(%d)\n",(long long)komodo_paxtotal(),(int32_t)chainActive.Tip()->nHeight,(int32_t)mempool.GetTotalTxSize());
+            fprintf(stderr, "miner KOMODO_DEPOSIT %llu pblock->nHeight %d mempool.GetTotalTxSize(%d)\n",(long long)komodo_paxtotal(),(int32_t)chainActive.Tip()->nHeight,(int32_t)mempool.GetTotalTxSize());
     }
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
@@ -193,7 +193,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         const int64_t nMedianTimePast = pindexPrev->GetMedianTimePast();
         CCoinsViewCache view(pcoinsTip);
         uint32_t expired;
-        
+
         // Priority order to process transactions
         list<COrphan> vOrphan; // list memory doesn't move
         map<uint256, vector<COrphan*> > mapDependers;
@@ -420,7 +420,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             if ( txNew.vout.size() > 1 )
                 fprintf(stderr,"%s txNew numvouts.%d\n",ASSETCHAINS_SYMBOL,(int32_t)txNew.vout.size());
         }
-        
+
         pblock->vtx[0] = txNew;
         pblocktemplate->vTxFees[0] = -nFees;
         // Randomise nonce
@@ -780,12 +780,14 @@ void static BitcoinMiner()
                                 if ( memcmp(pubkeys[i],pubkeys[0],33) == 0 )
                                     break;
                             if ( externalflag == 0 && i != 66 )
-                                printf("VIOLATION at %d\n",i);
+                                fprintf(stderr, "VIOLATION at %d\n",i);
                             for (i=0; i<66; i++)
                             { break;
-                                for (j=0; j<33; j++)
-                                    printf("%02x",pubkeys[i][j]);
-                                printf(" p%d -> %d\n",i,komodo_minerid(pindexPrev->nHeight-i,pubkeys[i]));
+                                for (j=0; j<33; j++){
+                                  printf("%02x",pubkeys[i][j]);
+                                  fflush(stdout);
+                                }
+                                fprintf(stderr, " p%d -> %d\n",i,komodo_minerid(pindexPrev->nHeight-i,pubkeys[i]));
                             }
                             for (j=gpucount=0; j<65; j++)
                             {

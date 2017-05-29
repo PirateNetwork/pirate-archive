@@ -115,7 +115,7 @@ bool AppInit(int argc, char* argv[])
             //    komodo_passport_iteration();
 	  boost::this_thread::sleep_for(boost::chrono::seconds(1));
         }
-        printf("initialized %s\n",ASSETCHAINS_SYMBOL);
+        fprintf(stderr, "initialized %s\n",ASSETCHAINS_SYMBOL);
         if (!boost::filesystem::is_directory(GetDataDir(false)))
         {
             fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
