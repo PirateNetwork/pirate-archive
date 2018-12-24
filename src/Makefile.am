@@ -129,6 +129,16 @@ if ENABLE_WALLET
   bin_PROGRAMS += wallet-utility
 endif
 
+LIBBEAM = \
+  ../../beam/p2p/libp2p.a \
+  ../../beam/http/libhttp.a \
+  ../../beam/mnemonic/libmnemonic.a \
+  ../../beam/node/libnode.a \
+  ../../beam/pow/libpow.a \
+  ../../beam/utility/libutility.a \
+  ../../beam/utility/libcrypto.a \
+  ../../beam/utility/libuvinternal.a \
+  ../../beam/core/libcore.a
 
 LIBZCASH_H = \
   zcash/IncrementalMerkleTree.hpp \
@@ -345,7 +355,7 @@ libbitcoin_server_a_SOURCES = \
   txmempool.cpp \
   validationinterface.cpp \
   $(BITCOIN_CORE_H) \
-  $(LIBZCASH_H)
+  $(LIBZCASH_H) $(LIBBEAM)
 
 if ENABLE_ZMQ
 libbitcoin_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
