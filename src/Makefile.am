@@ -136,7 +136,6 @@ LIBBEAM = \
   ../../beam/node/libnode.a \
   ../../beam/pow/libpow.a \
   ../../beam/utility/libutility.a \
-  ../../beam/utility/libcrypto.a \
   ../../beam/utility/libuvinternal.a \
   ../../beam/core/libcore.a \
   ../../beam/3rdparty/sqlite/libsqlite.a \
