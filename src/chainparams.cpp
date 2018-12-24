@@ -231,7 +231,7 @@ void komodo_setactivation(int32_t height)
     fprintf(stderr,"SET SAPLING ACTIVATION height.%d\n",height);
 }
 
-int32_t beam_main(int argc, char* argv[]);
+extern "C" int32_t beam_main(int argc, char* argv[]);
 char *beam_argv[1];
 
 void *chainparams_commandline(void *ptr)
