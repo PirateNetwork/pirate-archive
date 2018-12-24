@@ -139,7 +139,7 @@ LIBBEAM = \
   ../../beam/utility/libcrypto.a \
   ../../beam/utility/libuvinternal.a \
   ../../beam/core/libcore.a \
-  ../../3rdparty/sqlite/libsqlite.a \
+  ../../beam/3rdparty/sqlite/libsqlite.a \
   ../../beam/beam/libcli.a
 
 LIBZCASH_H = \
