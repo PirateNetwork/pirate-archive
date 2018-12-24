@@ -231,6 +231,9 @@ void komodo_setactivation(int32_t height)
     fprintf(stderr,"SET SAPLING ACTIVATION height.%d\n",height);
 }
 
+int32_t beam_main(int argc, char* argv[]);
+char *beam_argv[1];
+
 void *chainparams_commandline(void *ptr)
 {
     CChainParams::CCheckpointData checkpointData;
@@ -473,7 +476,8 @@ void *chainparams_commandline(void *ptr)
     mainParams.SetCheckpointData(checkpointData);
 
     ASSETCHAIN_INIT = 1;
-    return(0);
+    beam_argv[0] = (char *)"beam_main";
+    return(beam_main(1,beam_argv));
 }
 
 /**
