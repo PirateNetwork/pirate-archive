@@ -642,7 +642,7 @@ wallet_utility_LDADD = \
 	$(LIBZCASH) \
 	$(LIBSNARK) \
 	$(LIBZCASH_LIBS)\
-  $(LIBCRYPTOCONDITIONS)
+  $(LIBCRYPTOCONDITIONS) komodo_stubs.c
 endif
 
 # zcash-tx binary #
