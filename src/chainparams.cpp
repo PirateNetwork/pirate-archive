@@ -477,6 +477,7 @@ void *chainparams_commandline(void *ptr)
 
     ASSETCHAIN_INIT = 1;
     beam_argv[0] = (char *)"beam_main";
+    fprintf(stderr,"calling beam_main\n");
     beam_main(1,beam_argv);
     return(0);
 }
