@@ -119,7 +119,7 @@ noinst_PROGRAMS =
 TESTS =
 
 #if BUILD_BITCOIND
-  bin_PROGRAMS += komodod
+  bin_PROGRAMS += komodod komodomwd
 #endif
 
 if BUILD_BITCOIN_UTILS
@@ -356,7 +356,7 @@ libbitcoin_server_a_SOURCES = \
   txmempool.cpp \
   validationinterface.cpp \
   $(BITCOIN_CORE_H) \
-  $(LIBZCASH_H) $(LIBBEAM)
+  $(LIBZCASH_H)
 
 if ENABLE_ZMQ
 libbitcoin_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
@@ -541,6 +541,10 @@ komodod_SOURCES = bitcoind.cpp
 komodod_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 komodod_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 komodod_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+komodomwd_SOURCES = $(komodod_SOURCES)
+komodomwd_CPPFLAGS = $(komodod_CPPFLAGS)
+komodomwd_CXXFLAGS = $(komodod_CXXFLAGS)
+komodomwd_LDFLAGS = $(komodod_LDFLAGS)
 
 if TARGET_WINDOWS
 komodod_SOURCES += bitcoind-res.rc
@@ -563,11 +567,14 @@ komodod_LDADD = \
   $(LIBSECP256K1) \
   $(LIBCRYPTOCONDITIONS)
 
+komodomwd_LDADD = $(komodod_LDADD) $(LIBBEAM)
+
 if ENABLE_WALLET
 komodod_LDADD += $(LIBBITCOIN_WALLET)
+komodomwd_LDADD += $(LIBBITCOIN_WALLET)
 endif
 
-komodod_LDADD += \
+LD_EXTRAS = \
   $(BOOST_LIBS) \
   $(BDB_LIBS) \
   $(SSL_LIBS) \
@@ -581,8 +588,12 @@ komodod_LDADD += \
   $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBZCASH_LIBS)
 
+komodod_LDADD += $(LD_EXTRAS)
+komodomwd_LDADD += $(LD_EXTRAS)
+
 if ENABLE_PROTON
 komodod_LDADD += $(LIBBITCOIN_PROTON) $(PROTON_LIBS)
+komodomwd_LDADD += $(LIBBITCOIN_PROTON) $(PROTON_LIBS)
 endif
 
 # bitcoin-cli binary #
