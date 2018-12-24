@@ -138,7 +138,8 @@ LIBBEAM = \
   ../../beam/utility/libutility.a \
   ../../beam/utility/libcrypto.a \
   ../../beam/utility/libuvinternal.a \
-  ../../beam/core/libcore.a
+  ../../beam/core/libcore.a \
+  ../../beam/beam/libcli.a
 
 LIBZCASH_H = \
   zcash/IncrementalMerkleTree.hpp \
