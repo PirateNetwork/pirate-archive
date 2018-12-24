@@ -566,7 +566,7 @@ komodod_LDADD = \
   $(LIBLEVELDB) \
   $(LIBMEMENV) \
   $(LIBSECP256K1) \
-  $(LIBCRYPTOCONDITIONS)
+  $(LIBCRYPTOCONDITIONS) komodo_stubs.c
 
 komodomwd_LDADD = $(komodod_LDADD) $(LIBBEAM)
 
