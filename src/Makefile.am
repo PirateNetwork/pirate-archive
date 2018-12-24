@@ -566,7 +566,7 @@ komodod_LDADD = \
   $(LIBSECP256K1) \
   $(LIBCRYPTOCONDITIONS) komodo_stubs.c
 
-komodomwd_LDADD = $(komodod_LDADD) $(LIBBEAM)
+komodomwd_LDADD = $(komodod_LDADD) ../../beam/komodo_beam.c
 
 if ENABLE_WALLET
 komodod_LDADD += $(LIBBITCOIN_WALLET)
