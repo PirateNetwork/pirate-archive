@@ -29,7 +29,7 @@ This is the official PirateChain sourcecode repository based on https://github.c
 ## Tech Specification
 - Max Supply: 200 million ARRR
 - Block Time: 60s
-- Block Reward: 256 KMD
+- Block Reward: 256 ARRR
 - Mining Algorithm: Equihash 200,9
 
 ## About this Project
@@ -41,7 +41,8 @@ PirateChain (ARRR) is a 100% private send cryptocurrency. It uses a privacy prot
 
 ```shell
 #The following packages are needed:
-sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python python-zmq zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool libncurses-dev unzip git python zlib1g-dev wget bsdmainutils automake libboost-all-dev libssl-dev libprotobuf-dev protobuf-compiler libqrencode-dev libdb++-dev ntp ntpdate nano software-properties-common curl libevent-dev libcurl4-gnutls-dev cmake clang libsodium-dev -y
 ```
 
 ### Build Komodo
@@ -58,7 +59,7 @@ cd pirate
 ./zcutil/fetch-params.sh
 # -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use; -j$(nproc) for all threads available
 ./zcutil/build.sh -j8
-#This can take some time.
+# This can take some time.
 ```
 
 #### OSX
