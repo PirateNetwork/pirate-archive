@@ -147,10 +147,28 @@ namespace {
 
     struct CBlockIndexWorkComparator
     {
-        bool operator()(CBlockIndex *pa, CBlockIndex *pb) const {
+        bool operator()(CBlockIndex *pa, const CBlockIndex *pb) const {
             // First sort by most total work, ...
-            if (pa->chainPower > pb->chainPower) return false;
-            if (pa->chainPower < pb->chainPower) return true;
+           
+            if (ASSETCHAINS_LWMAPOS) {
+
+                /*  Decker:
+
+                    seems we had CChainPower classes compare here from Verus, it's slow, bcz of hard
+                    arith_uint256 math in bool operator<(const CChainPower &p1, const CChainPower &p2),
+                    this slows down setBlockIndexCandidates.insert operations in LoadBlockIndexDB(),
+                    so, for faster block index db loading we will use check from Verus only for LWMAPOS
+                    enabled chains.
+                */
+
+                if (pa->chainPower > pb->chainPower) return false;
+                if (pa->chainPower < pb->chainPower) return true;
+            }
+            else
+            {
+                if (pa->chainPower.chainWork > pb->chainPower.chainWork) return false;
+                if (pa->chainPower.chainWork < pb->chainPower.chainWork) return true;
+            }
 
             // ... then by earliest time received, ...
             if (pa->nSequenceId < pb->nSequenceId) return false;
@@ -173,8 +191,10 @@ namespace {
      * as good as our current tip or better. Entries may be failed, though, and pruning nodes may be
      * missing the data for the block.
      */
+    
+    //set<CBlockIndex*, CBlockIndexWorkComparator, std::allocator<CBlockIndex*>> setBlockIndexCandidates;
     set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexCandidates;
-
+    
     /** Number of nodes with fSyncStarted. */
     int nSyncStarted = 0;
 
@@ -4363,9 +4383,37 @@ static bool ActivateBestChainStep(bool fSkipdpow, CValidationState &state, CBloc
     notarizedht = komodo_notarized_height(&prevMoMheight,&notarizedhash,&txid);
     if ( !fSkipdpow && pindexFork != 0 && pindexOldTip->GetHeight() > notarizedht && pindexFork->GetHeight() < notarizedht )
     {
-        fprintf(stderr,"pindexOldTip->GetHeight().%d > notarizedht %d && pindexFork->GetHeight().%d is < notarizedht %d, so ignore it\n",(int32_t)pindexFork->GetHeight(),notarizedht,(int32_t)pindexOldTip->GetHeight(),notarizedht);
-        return state.DoS(100, error("ActivateBestChainStep(): pindexOldTip->GetHeight().%d > notarizedht %d && pindexFork->GetHeight().%d is < notarizedht %d, so ignore it",(int32_t)pindexFork->GetHeight(),notarizedht,(int32_t)pindexOldTip->GetHeight(),notarizedht),
-                    REJECT_INVALID, "past-notarized-height");
+        LogPrintf("pindexOldTip->GetHeight().%d > notarizedht %d && pindexFork->GetHeight().%d is < notarizedht %d, so ignore it\n",(int32_t)pindexOldTip->GetHeight(),notarizedht,(int32_t)pindexFork->GetHeight(),notarizedht);
+        // *** DEBUG ***
+        if (1)
+        {
+            const CBlockIndex *pindexLastNotarized = mapBlockIndex[notarizedhash];
+            auto msg = "- " + strprintf(_("Current tip : %s, height %d, work %s"),
+                                pindexOldTip->phashBlock->GetHex(), pindexOldTip->GetHeight(), pindexOldTip->chainPower.chainWork.GetHex()) + "\n" +
+                "- " + strprintf(_("New tip     : %s, height %d, work %s"),
+                                pindexMostWork->phashBlock->GetHex(), pindexMostWork->GetHeight(), pindexMostWork->chainPower.chainWork.GetHex()) + "\n" +
+                "- " + strprintf(_("Fork point  : %s, height %d"),
+                                pindexFork->phashBlock->GetHex(), pindexFork->GetHeight()) + "\n" +
+                "- " + strprintf(_("Last ntrzd  : %s, height %d"),
+                                pindexLastNotarized->phashBlock->GetHex(), pindexLastNotarized->GetHeight());
+            LogPrintf("[ Debug ]\n%s\n",msg);
+
+            int nHeight = pindexFork ? pindexFork->GetHeight() : -1;
+            int nTargetHeight = std::min(nHeight + 32, pindexMostWork->GetHeight());
+            
+            LogPrintf("[ Debug ] nHeight = %d, nTargetHeight = %d\n", nHeight, nTargetHeight);
+
+            CBlockIndex *pindexIter = pindexMostWork->GetAncestor(nTargetHeight);
+            while (pindexIter && pindexIter->GetHeight() != nHeight) {
+                LogPrintf("[ Debug -> New blocks list ] %s, height %d\n", pindexIter->phashBlock->GetHex(), pindexIter->GetHeight());
+                pindexIter = pindexIter->pprev;
+            }
+        }
+
+        CValidationState tmpstate;
+        InvalidateBlock(tmpstate,pindexMostWork); // trying to invalidate longest chain, which tried to reorg notarized chain (in case of fork point below last notarized block)
+        return state.DoS(100, error("ActivateBestChainStep(): pindexOldTip->GetHeight().%d > notarizedht %d && pindexFork->GetHeight().%d is < notarizedht %d, so ignore it",(int32_t)pindexOldTip->GetHeight(),notarizedht,(int32_t)pindexFork->GetHeight(),notarizedht),
+                REJECT_INVALID, "past-notarized-height");
     }
     // - On ChainDB initialization, pindexOldTip will be null, so there are no removable blocks.
     // - If pindexMostWork is in a chain that doesn't have the same genesis block as our chain,
