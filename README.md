@@ -1,6 +1,10 @@
 [![Build Status](https://travis-ci.org/KomodoPlatform/komodo.svg?branch=dev)](https://travis-ci.org/KomodoPlatform/komodo)
 ---
+<<<<<<< HEAD
 ![Pirate Logo](https://i.ibb.co/F7Dgnxy/Pirate-Logo-Wordmark-Gold.png "PirateChain Logo")
+=======
+![Komodo Logo](https://i.imgur.com/E8LtkAa.png "Komodo Logo")
+>>>>>>> 3508d17707ce1dfd5738b8262c93228623da1c99
 
 
 ## PirateChain
@@ -41,8 +45,12 @@ PirateChain (ARRR) is a 100% private send cryptocurrency. It uses a privacy prot
 
 ```shell
 #The following packages are needed:
+<<<<<<< HEAD
 sudo apt-get update && sudo apt-get upgrade -y
 sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool libncurses-dev unzip git python zlib1g-dev wget bsdmainutils automake libboost-all-dev libssl-dev libprotobuf-dev protobuf-compiler libqrencode-dev libdb++-dev ntp ntpdate nano software-properties-common curl libevent-dev libcurl4-gnutls-dev cmake clang libsodium-dev -y
+=======
+sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python python-zmq zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl libsodium-dev
+>>>>>>> 3508d17707ce1dfd5738b8262c93228623da1c99
 ```
 
 ### Build Komodo
@@ -77,7 +85,7 @@ cd pirate
 #### Windows
 Use a debian cross-compilation setup with mingw for windows and run:
 ```shell
-sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python python-zmq zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl cmake mingw-w64
+sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python python-zmq zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl cmake mingw-w64 libsodium-dev libevent-dev
 curl https://sh.rustup.rs -sSf | sh
 source $HOME/.cargo/env
 rustup target add x86_64-pc-windows-gnu
